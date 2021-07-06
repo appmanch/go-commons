@@ -2,16 +2,6 @@ package http
 
 import "net/http"
 
-type TurboRoute struct {
-	turboHandler http.Handler
-
-	name string
-
-	err error
-
-	namedRoutes map[string]*TurboRoute
-}
-
 type TurboRouter struct {
 
 	NotFoundHandler http.Handler
@@ -25,16 +15,19 @@ type TurboRouter struct {
 
 // RegisterTurbo returns a new router instance
 func RegisterTurbo() *TurboRouter {
-	return &TurboRouter{namedRoutes: make(map[string]*TurboRoute)}
-}
-
-func (turbo *TurboRoute) Handler(handler http.Handler) *TurboRoute {
-	if turbo.err == nil {
-		turbo.turboHandler = handler
+	return &TurboRouter{
+		namedRoutes:	make(map[string]*TurboRoute),
 	}
-	return turbo
 }
 
-func (turbo *TurboRoute) RegisterRoute(path string, f func(w http.ResponseWriter, r *http.Request)) *TurboRoute {
-	return turbo.Handler(http.HandlerFunc(f))
+// NewTurboRoute registers a blank route
+func (turboRouter *TurboRouter) NewTurboRoute() *TurboRoute {
+	route := &TurboRoute{}
+	turboRouter.routes = append(turboRouter.routes, route)
+	return route
+}
+
+// RegisterRoute helps in registering the endpoint paths for the API
+func (turboRouter *TurboRouter) RegisterRoute(path string, f func(http.ResponseWriter, *http.Request)) *TurboRoute {
+	return turboRouter.NewTurboRoute().HandlerFunc(f)
 }

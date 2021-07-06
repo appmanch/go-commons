@@ -1,6 +1,7 @@
 package http
 
 import (
+	"net/http"
 	"reflect"
 	"testing"
 )
@@ -35,5 +36,7 @@ func TestRoutesHandler(t *testing.T) {
 
 func TestFunction(t *testing.T) {
 	router := RegisterTurbo()
-	router.
+	router.RegisterRoute("/api/v1/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hello from turbo"))
+	} )
 }

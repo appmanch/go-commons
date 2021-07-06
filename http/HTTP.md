@@ -4,7 +4,7 @@ The go-commons `http` package provides enterprise grade http routing capabilitie
 
 Usage
 ```
-router := turbo.NewRouter()
+router := turbo.RegisterTurbo()
 router.RegisterRoute("/api/v1/healthCheck", healthCheck)
 router.RegisterRoute("/api/v1/getData", getData)
 
