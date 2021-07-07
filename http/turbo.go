@@ -1,22 +1,35 @@
 package http
 
-import "net/http"
+import (
+	"net/http"
+)
 
 type TurboRouter struct {
 
-	NotFoundHandler http.Handler
+	//NotFoundHandler http.Handler
 
-	MethodNotAllowedHandler http.Handler
+	//MethodNotAllowedHandler http.Handler
 
 	routes []*TurboRoute
 
-	namedRoutes map[string]*TurboRoute
+	//registeredRoutes map[string]*TurboRoute
+
+	//TurboRouteConfig
+
+	operation string
+
+}
+
+// TurboRouteConfig configs that can be passed while creating the Turbo instance
+type TurboRouteConfig struct {
+	isPathUrlEncoded bool
+	isRegex bool
 }
 
 // RegisterTurbo returns a new router instance
 func RegisterTurbo() *TurboRouter {
 	return &TurboRouter{
-		namedRoutes:	make(map[string]*TurboRoute),
+		operation:	"GET",
 	}
 }
 
@@ -29,5 +42,18 @@ func (turboRouter *TurboRouter) NewTurboRoute() *TurboRoute {
 
 // RegisterRoute helps in registering the endpoint paths for the API
 func (turboRouter *TurboRouter) RegisterRoute(path string, f func(http.ResponseWriter, *http.Request)) *TurboRoute {
-	return turboRouter.NewTurboRoute().HandlerFunc(f)
+	tr := turboRouter.PreWork(path)
+	return tr.HandlerFunc(f)
 }
+
+// PreWork serves as a middleware function which can be extended to multiple functionalities
+func (turboRouter *TurboRouter) PreWork(path string) *TurboRoute {
+	return turboRouter.AddPaths(path)
+}
+
+// GetRoutes provides a list of all the routes that have been registered
+func (turboRouter *TurboRouter) GetRoutes() []*TurboRoute {
+	// should be sent as a map object in deserialized form
+	return turboRouter.routes
+}
+
