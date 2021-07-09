@@ -103,7 +103,7 @@ type MatchedTurboRoute struct {
 	Err error
 }
 
-// Match :
+// Match : the function checks for the incoming request path whether it matches with the registered route's path or not
 func (turboEngine *TurboEngine) Match(r *http.Request, match *MatchedTurboRoute) bool {
 	for _, val := range turboEngine.routes {
 		log.Printf("checking registered path : %s with incoming path : %s\n", val.path, r.URL.Path)
@@ -116,7 +116,7 @@ func (turboEngine *TurboEngine) Match(r *http.Request, match *MatchedTurboRoute)
 	return false
 }
 
-//checkForMethod :
+//checkForMethod : the function checks for the incoming request method, if it matches with the registered route's method or not
 func (turboEngine *TurboEngine) checkForMethod(method string, match *MatchedTurboRoute) bool {
 	for _, val := range turboEngine.routes {
 		if contains(val.supportedMethods, method) {

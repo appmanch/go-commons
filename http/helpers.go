@@ -28,7 +28,7 @@ func endpointNotFound(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Endpoint Not Found : " + r.URL.Path + "\n"))
 }
 
-// endpointNotFoundHandler :
+// endpointNotFoundHandler : when a requested endpoint is not found in the registered route's this handler is invoked
 func endpointNotFoundHandler() http.Handler {
 	return http.HandlerFunc(endpointNotFound)
 }
@@ -38,10 +38,12 @@ func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Requested Method : " + r.Method + " not supported for Endpoint : " + r.URL.Path + "\n"))
 }
 
+// methodNotAllowedHandler : when a requested method is not allowed in the registered route's method list this handler is invoked
 func methodNotAllowedHandler() http.Handler {
 	return http.HandlerFunc(methodNotAllowed)
 }
 
+// contains : checks if the requested method is present in the supported methods of the route
 func contains(supportedMethods string, method string) bool {
 	supMethods := strings.Split(supportedMethods, ",")
 	for _, val := range supMethods {

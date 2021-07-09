@@ -37,13 +37,13 @@ func TestRoutesHandler(t *testing.T) {
 
 func TestFunction(t *testing.T) {
 	router := RegisterTurboEngine()
-	router.RegisterTurboRoute("/api/v1/hello", func(w http.ResponseWriter, r *http.Request) {
+	router.RegisterTurboRoute("GET", "/api/v1/hello", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello from turbo"))
 	} )
-	router.RegisterTurboRoute("/api/v2/hello", func(w http.ResponseWriter, r *http.Request) {
+	router.RegisterTurboRoute("GET,PUT", "/api/v2/hello", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello from turbo"))
 	} )
-	router.RegisterTurboRoute("/api/v3/hello", func(w http.ResponseWriter, r *http.Request) {
+	router.RegisterTurboRoute("POST", "/api/v3/hello", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello from turbo"))
 	} )
 
