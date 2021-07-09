@@ -1,75 +1,53 @@
 package http
 
 import (
-	"context"
 	"errors"
 	"log"
 	"net/http"
-	"path"
 )
 
 var (
 	ErrNotFound = errors.New("requested route not found in the registered routes")
 )
 
-type TurboRouter struct {
-
-	//NotFoundHandler http.Handler
-
-	//MethodNotAllowedHandler http.Handler
-
+// TurboEngine : code of the http framework
+type TurboEngine struct {
 	routes []*TurboRoute
-
-	//registeredRoutes map[string]*TurboRoute
-
-	//TurboRouteConfig
-
 	operation string
-
-}
-
-// TurboRouteConfig configs that can be passed while creating the Turbo instance
-type TurboRouteConfig struct {
-	isPathUrlEncoded bool
 	isRegex bool
+	isPathUrlEncoded bool
 }
 
-// RegisterTurbo returns a new router instance
-// there should be an option to initialize turbo with some configuration
-func RegisterTurbo() *TurboRouter {
+// RegisterTurboEngine : registers the new instance of the Turbo Framework
+func RegisterTurboEngine() *TurboEngine {
 	log.Println("Registering Turbo")
-	return &TurboRouter{
-		operation:	"GET",
-	}
+	return &TurboEngine{}
 }
 
-// NewTurboRoute registers a blank route
-func (turboRouter *TurboRouter) NewTurboRoute() *TurboRoute {
-	route := &TurboRoute{}
-	turboRouter.routes = append(turboRouter.routes, route)
-	return route
-}
-
-// RegisterRoute helps in registering the endpoint paths for the API
-func (turboRouter *TurboRouter) RegisterRoute(path string, f func(http.ResponseWriter, *http.Request)) *TurboRoute {
+// RegisterTurboRoute : registers the new route in the HTTP Server for the API
+func (turboEngine *TurboEngine) RegisterTurboRoute(path string, f func(w http.ResponseWriter, r *http.Request)) *TurboRoute {
 	log.Printf("Registering Route : %s\n", path)
-	tr := turboRouter.PreWork(path)
-	return tr.HandlerFunc(f)
+	te := turboEngine.PreWork(path)
+	return te.HandlerFunc(f)
 }
 
-// PreWork serves as a middleware function which can be extended to multiple functionalities
-func (turboRouter *TurboRouter) PreWork(path string) *TurboRoute {
+// PreWork : serves as a function to perform the necessary prework onto the routes if required
+// It serves as a middleware function which can be extended to multiple functionalities
+func (turboEngine *TurboEngine) PreWork(path string) *TurboRoute {
 	log.Printf("Performing Prework : %s\n", path)
-	return turboRouter.AddPaths(path)
+	// Add registered routes to a central store
+	te := turboEngine.AddPaths(path)
+	// Add more functions in the prework as the need and purpose arises
+	return te
 }
 
-// GetRoutes provides a list of all the routes that have been registered
-func (turboRouter *TurboRouter) GetRoutes() []*TurboRoute {
-	// should be sent as a map object in deserialized form
-	return turboRouter.routes
+// GetRoutes : returns the list of registered routes
+func (turboEngine *TurboEngine) GetRoutes() []*TurboRoute{
+	return turboEngine.routes
 }
 
-func (turboRouter *TurboRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+func (turboEngine *TurboEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	log.Printf("ServeHTTP : %s\n", path)
 	if p := refinePath(path); p != path {
@@ -86,11 +64,9 @@ func (turboRouter *TurboRouter) ServeHTTP(w http.ResponseWriter, r *http.Request
 	var match MatchedTurboRoute
 	var handler http.Handler
 
-	if turboRouter.Match(r, &match) {
+	if turboEngine.Match(r, &match) {
 		log.Println("isMatch")
 		handler = match.Handler
-		r = requestWithVars(r, match.Vars)
-		r = requestWithRoute(r, match.TurboRoute)
 	}
 
 	/*if handler == nil && match.MatchErr == ErrMethodsMismatch {
@@ -112,15 +88,8 @@ type MatchedTurboRoute struct {
 	Err error
 }
 
-type contextKey int
-
-const (
-	varsKey contextKey = iota
-	routeKey
-)
-
-func (turboRouter *TurboRouter) Match(r *http.Request, match *MatchedTurboRoute) bool {
-	for _, val := range turboRouter.routes {
+func (turboEngine *TurboEngine) Match(r *http.Request, match *MatchedTurboRoute) bool {
+	for _, val := range turboEngine.routes {
 		log.Printf("checking registered path : %s with incoming path : %s\n", val.path, r.URL.Path)
 		if val.path == r.URL.Path {
 			return true
@@ -128,30 +97,4 @@ func (turboRouter *TurboRouter) Match(r *http.Request, match *MatchedTurboRoute)
 	}
 	match.Err = ErrNotFound
 	return false
-}
-
-func requestWithVars(r *http.Request, vars map[string]string) *http.Request {
-	ctx := context.WithValue(r.Context(), varsKey, vars)
-	return r.WithContext(ctx)
-}
-
-func requestWithRoute(r *http.Request, route *TurboRoute) *http.Request {
-	ctx := context.WithValue(r.Context(), routeKey, route)
-	return r.WithContext(ctx)
-}
-
-// refinePath
-// Borrowed from the golang's net/http package
-func refinePath(p string) string {
-	if p == "" {
-		return "/"
-	}
-	if p[0] != '/' {
-		p = "/" + p
-	}
-	np := path.Clean(p)
-	if p[len(p)-1] == '/' && np != "/" {
-		np += "/"
-	}
-	return np
 }

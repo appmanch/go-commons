@@ -28,8 +28,8 @@ func (turboRoute *TurboRoute) HandlerFunc(f func(http.ResponseWriter, *http.Requ
 	return turboRoute.Handler(http.HandlerFunc(f))
 }
 
-func (turboRouter *TurboRouter) AddPaths(path string) *TurboRoute {
+func (turboEngine *TurboEngine) AddPaths(path string) *TurboRoute {
 	route := &TurboRoute{path: path}
-	turboRouter.routes = append(turboRouter.routes, route)
+	turboEngine.routes = append(turboEngine.routes, route)
 	return route
 }
