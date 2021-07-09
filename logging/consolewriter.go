@@ -3,6 +3,7 @@ package logging
 import (
 	"bufio"
 	"io"
+	"io/ioutil"
 	"os"
 )
 
@@ -28,9 +29,9 @@ func (cw *ConsoleWriter) InitConfig(w *WriterConfig) {
 	cw.debugWriter = os.Stdout
 	cw.traceWriter = os.Stdout
 
-	cw.infoWriter = io.Discard
-	cw.debugWriter = io.Discard
-	cw.traceWriter = io.Discard
+	cw.infoWriter = ioutil.Discard
+	cw.debugWriter = ioutil.Discard
+	cw.traceWriter = ioutil.Discard
 
 }
 
