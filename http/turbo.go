@@ -51,21 +51,24 @@ func (turboEngine *TurboEngine) ServeHTTP(w http.ResponseWriter, r *http.Request
 	path := r.URL.Path
 	log.Printf("ServeHTTP : %s\n", path)
 	if p := refinePath(path); p != path {
-		log.Printf("refinedPath : %s\n", p)
 		url := *r.URL
 		url.Path = p
 		p = url.String()
-		log.Printf("urlString() : %s\n", p)
 		w.Header().Set("Location", p)
 		w.WriteHeader(http.StatusMovedPermanently)
+		w.Write([]byte("Path Moved : " + p + "\n"))
 		return
 	}
+
+	/*
+	possible middle check
+	Cautious handlers should read the Request.Body first, and then reply.
+	 */
 
 	var match MatchedTurboRoute
 	var handler http.Handler
 
 	if turboEngine.Match(r, &match) {
-		log.Println("isMatch")
 		handler = match.Handler
 	}
 
@@ -92,6 +95,7 @@ func (turboEngine *TurboEngine) Match(r *http.Request, match *MatchedTurboRoute)
 	for _, val := range turboEngine.routes {
 		log.Printf("checking registered path : %s with incoming path : %s\n", val.path, r.URL.Path)
 		if val.path == r.URL.Path {
+			match.Handler = val.turboHandler
 			return true
 		}
 	}
