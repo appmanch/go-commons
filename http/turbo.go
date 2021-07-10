@@ -24,15 +24,13 @@ func RegisterTurboEngine() *TurboEngine {
 	log.Println("Registering Turbo")
 	return &TurboEngine{}
 }
-/*
-func (turboEngine *TurboEngine) HandleTurboRoute(path string, f func(w http.ResponseWriter, r *http.Request)) *TurboRoute {
-	
-}*/
 
 // RegisterTurboRoute : registers the new route in the HTTP Server for the API
 func (turboEngine *TurboEngine) RegisterTurboRoute(path string, f func(w http.ResponseWriter, r *http.Request)) *TurboRoute {
 	log.Printf("Registering Route : %s\n", path)
 	te := turboEngine.PreWork(path)
+	// register a default GET method for each route, further methods can be overwritten using the StoreTurboMethod
+	te = te.StoreTurboMethod("get")
 	return te.HandlerFunc(f)
 }
 
