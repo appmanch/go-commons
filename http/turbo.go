@@ -11,10 +11,10 @@ var (
 	MethodNotFound = errors.New("request method not registered for the route")
 )
 
-// TurboEngine : code of the http framework
+// TurboEngine : core of the http framework
 type TurboEngine struct {
 	routes []*TurboRoute
-	operation string
+	defaultMethod string
 	isRegex bool
 	isPathUrlEncoded bool
 }
@@ -22,7 +22,9 @@ type TurboEngine struct {
 // RegisterTurboEngine : registers the new instance of the Turbo Framework
 func RegisterTurboEngine() *TurboEngine {
 	log.Println("Registering Turbo")
-	return &TurboEngine{}
+	return &TurboEngine{
+		defaultMethod: "get",
+	}
 }
 
 // RegisterTurboRoute : registers the new route in the HTTP Server for the API
@@ -30,7 +32,7 @@ func (turboEngine *TurboEngine) RegisterTurboRoute(path string, f func(w http.Re
 	log.Printf("Registering Route : %s\n", path)
 	te := turboEngine.PreWork(path)
 	// register a default GET method for each route, further methods can be overwritten using the StoreTurboMethod
-	te = te.StoreTurboMethod("get")
+	te = te.StoreTurboMethod(turboEngine.defaultMethod)
 	return te.HandlerFunc(f)
 }
 
