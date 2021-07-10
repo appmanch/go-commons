@@ -56,6 +56,7 @@ func (turboEngine *TurboEngine) ServeHTTP(w http.ResponseWriter, r *http.Request
 	var handler http.Handler
 
 	// perform the path checks before, set the 301 status even before further computation
+	// these checks need not to be performed once the PreWork is refined and up to the mark
 	if p := refinePath(path); p != path {
 		url := *r.URL
 		url.Path = p
