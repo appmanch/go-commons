@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strings"
 )
 
 type TurboRoute struct {
@@ -18,6 +19,8 @@ type TurboRoute struct {
 	supportedMethods string
 
 	//registeredRoutes map[string]*TurboRoute
+
+	scheme string
 }
 
 // Handler :
@@ -34,8 +37,14 @@ func (turboRoute *TurboRoute) HandlerFunc(f func(http.ResponseWriter, *http.Requ
 }
 
 // StoreTurboRoutes :
-func (turboEngine *TurboEngine) StoreTurboRoutes(methods string, path string) *TurboRoute {
-	route := &TurboRoute{path: path, supportedMethods: methods}
+func (turboEngine *TurboEngine) StoreTurboRoutes(path string) *TurboRoute {
+	route := &TurboRoute{path: path}
 	turboEngine.routes = append(turboEngine.routes, route)
 	return route
+}
+
+func (turboRoute *TurboRoute) StoreTurboMethod(methods... string) *TurboRoute {
+	methodString := strings.Join(methods, ",")
+	turboRoute.supportedMethods = methodString
+	return turboRoute
 }
