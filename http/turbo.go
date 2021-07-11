@@ -32,7 +32,7 @@ func (turboEngine *TurboEngine) RegisterTurboRoute(path string, f func(w http.Re
 	log.Printf("Registering Route : %s\n", path)
 	te := turboEngine.PreWork(path)
 	// register a default GET method for each route, further methods can be overwritten using the StoreTurboMethod
-	te = te.StoreTurboMethod(turboEngine.defaultMethod)
+	te = te.TurboMethod(turboEngine.defaultMethod)
 	return te.HandlerFunc(f)
 }
 

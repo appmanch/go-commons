@@ -12,7 +12,7 @@ func TestFunction(t *testing.T) {
 
 	router.RegisterTurboRoute("/api/v1/hello", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello from turbo"))
-	} ).StoreTurboMethod("get", "Post")
+	} ).TurboMethod("get", "Post")
 	router.RegisterTurboRoute("/api/v2/hello", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello from turbo"))
 	} )
@@ -69,7 +69,7 @@ func TestTurboEngine_RegisterTurboRoute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			turboEngine := &TurboEngine{
 				routes:           tt.fields.routes,
-				operation:        tt.fields.operation,
+				defaultMethod:        tt.fields.operation,
 				isRegex:          tt.fields.isRegex,
 				isPathUrlEncoded: tt.fields.isPathUrlEncoded,
 			}

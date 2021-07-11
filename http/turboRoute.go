@@ -43,8 +43,8 @@ func (turboEngine *TurboEngine) StoreTurboRoutes(path string) *TurboRoute {
 	return route
 }
 
-// StoreTurboMethod : Function stores the respective supported methods required for the API
-func (turboRoute *TurboRoute) StoreTurboMethod(methods... string) *TurboRoute {
+// TurboMethod : Function stores the respective supported methods required for the API
+func (turboRoute *TurboRoute) TurboMethod(methods... string) *TurboRoute {
 	methodString := strings.Join(methods, ",")
 	turboRoute.supportedMethods = strings.ToUpper(methodString)
 	return turboRoute
