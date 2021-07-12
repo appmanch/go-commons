@@ -42,6 +42,7 @@ func (turboEngine *TurboEngine) PreWork(path string) *TurboRoute {
 	log.Printf("Performing Prework : %s\n", path)
 	// Add registered routes to a central store
 	te := turboEngine.StoreTurboRoutes(path)
+	createMapping(path)
 	// Add more functions in the prework as the need and purpose arises
 	return te
 }
