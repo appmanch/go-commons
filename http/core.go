@@ -21,21 +21,37 @@ type TurboRouteMap struct {
 
 func (turboRouteMap *TurboRouteMap) insertNode(val string) *TurboRouteMap {
 	if turboRouteMap.root == nil {
+		log.Println("first insert")
 		turboRouteMap.root = &TurboRouteNode{key: "/", data: nil, methods: nil}
 	} else {
+		log.Println("consecutive insert")
 		turboRouteMap.root.insert(val)
 	}
 	return turboRouteMap
 }
 
 func (turboRouteNode *TurboRouteNode) insert(val string) {
+	log.Printf("key : %s\n", turboRouteNode.key)
+	log.Printf("data : %v", turboRouteNode.data)
 	if turboRouteNode == nil {
 		return
-	} else if turboRouteNode.key == "" {
+	} else if turboRouteNode.data == nil {
+		log.Println("if key is nil")
 		turboRouteNode.data = &TurboRouteNode{key: val, data: nil, methods: nil}
 	} else if turboRouteNode.key == val {
+		log.Println("key matches	")
 		// TODO how to proceed when a route key matches to the already existing node key
+		// keep calling insert if there is a match found
+		turboRouteNode.insert(val)
 	}
+}
+
+func printHierarchy(node *TurboRouteNode) {
+	if node == nil {
+		return
+	}
+	log.Print(node.key)
+	printHierarchy(node.data)
 }
 
 func createMapping(path string) {
@@ -48,12 +64,11 @@ func createMapping(path string) {
 	pathArr := strings.Split(path, "/")
 	log.Printf("CreateMapping: %s\n", pathArr)
 	for _, val := range pathArr {
-		if val != "" {
+
 			log.Printf("CreateMapping: %s\n", val)
-			hierarchy.insertNode(val)
-		}
+			hierarchy = hierarchy.insertNode(val)
+
 		//insertNode(val)
 	}
-
-	log.Printf("%v", hierarchy)
+	printHierarchy(hierarchy.root)
 }
