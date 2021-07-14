@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"strings"
 )
 
 type TurboRoute struct {
@@ -13,14 +12,16 @@ type TurboRoute struct {
 
 	path string
 
-	err error
+	err error //not needed
 
 	// supportedMethods : `,` separated methods can be registered for a single route i.e. "GET,POST,DELETE"
-	supportedMethods string
+	//supportedMethods string
+
+	routeMethod string
 
 	//registeredRoutes map[string]*TurboRoute
 
-	scheme string
+	//scheme string // not needed
 }
 
 // Handler :
@@ -37,15 +38,15 @@ func (turboRoute *TurboRoute) HandlerFunc(f func(http.ResponseWriter, *http.Requ
 }
 
 // StoreTurboRoutes : Function stores all the registered Routes
-func (turboEngine *TurboEngine) StoreTurboRoutes(path string) *TurboRoute {
-	route := &TurboRoute{path: path}
+func (turboEngine *TurboEngine) StoreTurboRoutes(path string, method string) *TurboRoute {
+	route := &TurboRoute{path: path, routeMethod: method}
 	turboEngine.routes = append(turboEngine.routes, route)
 	return route
 }
 
 // TurboMethod : Function stores the respective supported methods required for the API
-func (turboRoute *TurboRoute) TurboMethod(methods... string) *TurboRoute {
+/*func (turboRoute *TurboRoute) TurboMethod(methods... string) *TurboRoute {
 	methodString := strings.Join(methods, ",")
 	turboRoute.supportedMethods = strings.ToUpper(methodString)
 	return turboRoute
-}
+}*/

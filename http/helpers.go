@@ -1,10 +1,8 @@
 package http
 
 import (
-	"log"
 	"net/http"
 	"path"
-	"strings"
 )
 
 // refinePath
@@ -51,7 +49,7 @@ func methodNotAllowedHandler() http.Handler {
 }
 
 // contains : checks if the requested method is present in the supported methods of the route
-func contains(supportedMethods string, method string) bool {
+/*func contains(supportedMethods string, method string) bool {
 	log.Println("contains call " + supportedMethods)
 	supMethods := strings.Split(supportedMethods, ",")
 	for _, val := range supMethods {
@@ -61,4 +59,4 @@ func contains(supportedMethods string, method string) bool {
 	}
 	return false
 }
-
+*/

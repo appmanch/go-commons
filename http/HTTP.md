@@ -2,12 +2,12 @@
 
 The go-commons `http` package provides enterprise grade http routing capabilities.
 
-###Common Usage
+### Common Usage
 ```go
 func main() {
 	router := turbo.RegisterTurboEngine()
-	router.RegisterTurboRoute("/api/v1/healthCheck", healthCheck)
-	router.RegisterTurboRoute("/api/v1/getData", getData)
+	router.Get("/api/v1/healthCheck", healthCheck)
+	router.Get("/api/v1/getData", getData)
 	
 	srv := &http.Server{
 		Handler:        router, 
@@ -22,16 +22,4 @@ func main() {
 }
 ```
 
-###Functionalities exposed
-* RegisterTurboRoute - Registers the new route in the HTTP Server for the API
-  * TurboMethod - Function helps in defining the respective supported methods required by the API
-    FYI: the HTTP methods are case in sensitive, so the methods can be added in any form like below
-    ```go
-    func main() {
-        router := turbo.RegisterTurboEngine()
-        router.RegisterTurboRoute("/api/v1/hello", func(w http.ResponseWriter, r *http.Request) {
-            w.Write([]byte("hello from turbo"))
-        } ).TurboMethod("get", "Post")
-    }
-    ```
-* GetRoutes - Returns the List of all Registered Routes in the Server
+### Functionalities exposed
