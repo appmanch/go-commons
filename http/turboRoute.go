@@ -21,7 +21,10 @@ type TurboRoute struct {
 
 	//registeredRoutes map[string]*TurboRoute
 
+	subRoute []*TurboRoute
+
 	//scheme string // not needed
+	matchedSubRoute map[string]*TurboRoute
 }
 
 // Handler :
@@ -40,6 +43,9 @@ func (turboRoute *TurboRoute) HandlerFunc(f func(http.ResponseWriter, *http.Requ
 // StoreTurboRoutes : Function stores all the registered Routes
 func (turboEngine *TurboEngine) StoreTurboRoutes(path string, method string) *TurboRoute {
 	route := &TurboRoute{path: path, routeMethod: method}
+	turboEngine.matchedRoutes = map[string]*TurboRoute{
+		path: route,
+	}
 	turboEngine.routes = append(turboEngine.routes, route)
 	return route
 }
@@ -49,4 +55,10 @@ func (turboEngine *TurboEngine) StoreTurboRoutes(path string, method string) *Tu
 	methodString := strings.Join(methods, ",")
 	turboRoute.supportedMethods = strings.ToUpper(methodString)
 	return turboRoute
+}*/
+
+/*func (turboRoute *TurboRoute) SubRoute(path string, method string) *TurboEngine {
+	subRoute := &TurboRoute{path: path, routeMethod: method}
+	turboRoute.subRoute = append(turboRoute.subRoute, subRoute)
+
 }*/

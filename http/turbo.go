@@ -18,6 +18,7 @@ type TurboEngine struct {
 	isPathUrlEncoded bool
 	RouteNotFoundHandler http.Handler
 	MethodNotAllowedHandler http.Handler
+	matchedRoutes map[string]*TurboRoute
 }
 
 // RegisterTurboEngine : registers the new instance of the Turbo Framework
@@ -26,6 +27,7 @@ func RegisterTurboEngine() *TurboEngine {
 	return &TurboEngine{
 		RouteNotFoundHandler: endpointNotFoundHandler(),
 		MethodNotAllowedHandler: methodNotAllowedHandler(),
+		matchedRoutes: make(map[string]*TurboRoute),
 	}
 }
 
@@ -64,7 +66,7 @@ func (turboEngine *TurboEngine) PreWork(path string, method string) *TurboRoute 
 	log.Printf("Performing Prework : %s\n", path)
 	// Add registered routes to a central store
 	te := turboEngine.StoreTurboRoutes(path, method)
-	createMapping(path)
+	//createMapping(path)
 	// Add more functions in the prework as the need and purpose arises
 	return te
 }
@@ -126,7 +128,7 @@ type MatchedTurboRoute struct {
 
 // Match : the function checks for the incoming request path whether it matches with the registered route's path or not
 func (turboEngine *TurboEngine) Match(r *http.Request, match *MatchedTurboRoute) bool {
-	for _, val := range turboEngine.routes {
+	/*for _, val := range turboEngine.routes {
 		log.Printf("checking registered path : %s with incoming path : %s\n", val.path, r.URL.Path)
 		log.Println(val.routeMethod)
 		if val.path == r.URL.Path {
@@ -137,6 +139,19 @@ func (turboEngine *TurboEngine) Match(r *http.Request, match *MatchedTurboRoute)
 				match.Err = MethodNotFound
 				return false
 			}
+		}
+	}*/
+	log.Printf("matchedRoutes %v\n\n", turboEngine.matchedRoutes)
+	route, isMatch := turboEngine.matchedRoutes[r.URL.Path]
+	log.Println(isMatch)
+	log.Printf("route : %v\n", route)
+	if route.routeMethod == r.Method {
+		if isMatch {
+			match.Handler = route.turboHandler
+			return true
+		} else {
+			match.Err = MethodNotFound
+			return false
 		}
 	}
 	match.Err = ErrNotFound
