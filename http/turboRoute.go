@@ -1,6 +1,7 @@
 package http
 
 import (
+	"log"
 	"net/http"
 )
 
@@ -13,6 +14,8 @@ type TurboRoute struct {
 	path string
 
 	err error //not needed
+
+	isSubRoutePresent bool
 
 	// supportedMethods : `,` separated methods can be registered for a single route i.e. "GET,POST,DELETE"
 	//supportedMethods string
@@ -43,22 +46,17 @@ func (turboRoute *TurboRoute) HandlerFunc(f func(http.ResponseWriter, *http.Requ
 // StoreTurboRoutes : Function stores all the registered Routes
 func (turboEngine *TurboEngine) StoreTurboRoutes(path string, method string) *TurboRoute {
 	route := &TurboRoute{path: path, routeMethod: method}
-	turboEngine.matchedRoutes = map[string]*TurboRoute{
-		path: route,
-	}
-	turboEngine.routes = append(turboEngine.routes, route)
+	turboEngine.matchedRoutes[path] = route
+	log.Printf("routeinfo :%v\n\n", turboEngine.matchedRoutes[path])
+	//turboEngine.routes = append(turboEngine.routes, route)
 	return route
 }
 
-// TurboMethod : Function stores the respective supported methods required for the API
-/*func (turboRoute *TurboRoute) TurboMethod(methods... string) *TurboRoute {
-	methodString := strings.Join(methods, ",")
-	turboRoute.supportedMethods = strings.ToUpper(methodString)
-	return turboRoute
-}*/
+// SubRoute : Initialize a blank SubRoute
+func (turboRoute *TurboRoute) SubRoute() *TurboRoute {
+	return &TurboRoute{
+		isSubRoutePresent: true,
+		matchedSubRoute: make(map[string]*TurboRoute),
+	}
+}
 
-/*func (turboRoute *TurboRoute) SubRoute(path string, method string) *TurboEngine {
-	subRoute := &TurboRoute{path: path, routeMethod: method}
-	turboRoute.subRoute = append(turboRoute.subRoute, subRoute)
-
-}*/

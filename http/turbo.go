@@ -128,40 +128,26 @@ type MatchedTurboRoute struct {
 
 // Match : the function checks for the incoming request path whether it matches with the registered route's path or not
 func (turboEngine *TurboEngine) Match(r *http.Request, match *MatchedTurboRoute) bool {
-	/*for _, val := range turboEngine.routes {
-		log.Printf("checking registered path : %s with incoming path : %s\n", val.path, r.URL.Path)
-		log.Println(val.routeMethod)
-		if val.path == r.URL.Path {
-			if val.routeMethod == r.Method {
-				match.Handler = val.turboHandler
-				return true
-			} else {
-				match.Err = MethodNotFound
-				return false
-			}
-		}
-	}*/
 	log.Printf("matchedRoutes %v\n\n", turboEngine.matchedRoutes)
 	route, isMatch := turboEngine.matchedRoutes[r.URL.Path]
 	log.Println(isMatch)
 	log.Printf("route : %v\n", route)
-	if route.routeMethod == r.Method {
-		if isMatch {
-			match.Handler = route.turboHandler
-			return true
+	if isMatch {
+		// add a check to check further subroutes, logic to be implemented
+		if route.routeMethod == r.Method {
+			if isMatch {
+				match.Handler = route.turboHandler
+				return true
+			} else {
+				match.Err = ErrNotFound
+				return false
+			}
 		} else {
 			match.Err = MethodNotFound
 			return false
 		}
+	} else {
+		match.Err = ErrNotFound
+		return false
 	}
-	match.Err = ErrNotFound
-	return false
 }
-
-//checkForMethod : the function checks for the incoming request method, if it matches with the registered route's method or not
-/*func (turboEngine *TurboEngine) checkForMethod(index int, method string) bool {
-	if contains(turboEngine.routes[index].supportedMethods, method) {
-			return true
-		}
-	return false
-}*/

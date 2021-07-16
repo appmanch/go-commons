@@ -47,16 +47,3 @@ func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
 func methodNotAllowedHandler() http.Handler {
 	return http.HandlerFunc(methodNotAllowed)
 }
-
-// contains : checks if the requested method is present in the supported methods of the route
-/*func contains(supportedMethods string, method string) bool {
-	log.Println("contains call " + supportedMethods)
-	supMethods := strings.Split(supportedMethods, ",")
-	for _, val := range supMethods {
-		if val == method {
-			return true
-		}
-	}
-	return false
-}
-*/
