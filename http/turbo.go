@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strings"
 )
 
 var (
@@ -54,10 +55,11 @@ func (turboEngine *TurboEngine) Delete(path string, f func(w http.ResponseWriter
 // RegisterTurboRoute : registers the new route in the HTTP Server for the API
 func (turboEngine *TurboEngine) RegisterTurboRoute(path string, f func(w http.ResponseWriter, r *http.Request), method string) *TurboRoute {
 	log.Printf("Registering Route : %s\n", path)
-	te := turboEngine.PreWork(path, method)
+	//turboEngine.rootPath = path
+	turboRoute := turboEngine.PreWork(path, method)
 	// register a default GET method for each route, further methods can be overwritten using the StoreTurboMethod
 	//te = te.TurboMethod(method)
-	return te.HandlerFunc(f)
+	return turboRoute.HandlerFunc(f)
 }
 
 // PreWork : serves as a function to perform the necessary prework onto the routes if required
@@ -65,10 +67,15 @@ func (turboEngine *TurboEngine) RegisterTurboRoute(path string, f func(w http.Re
 func (turboEngine *TurboEngine) PreWork(path string, method string) *TurboRoute {
 	log.Printf("Performing Prework : %s\n", path)
 	// Add registered routes to a central store
-	te := turboEngine.StoreTurboRoutes(path, method)
+	turboRoute := turboEngine.StoreTurboRoutes(path, method)
 	//createMapping(path)
 	// Add more functions in the prework as the need and purpose arises
-	return te
+	return turboRoute
+}
+
+func (turboEngine *TurboEngine) Group(path string) *TurboRoute {
+	turboRoute := turboEngine.StoreTurboRoutes(path, "")
+	return turboRoute
 }
 
 // GetRoutes : returns the list of registered routes
@@ -129,25 +136,27 @@ type MatchedTurboRoute struct {
 // Match : the function checks for the incoming request path whether it matches with the registered route's path or not
 func (turboEngine *TurboEngine) Match(r *http.Request, match *MatchedTurboRoute) bool {
 	log.Printf("matchedRoutes %v\n\n", turboEngine.matchedRoutes)
-	route, isMatch := turboEngine.matchedRoutes[r.URL.Path]
-	log.Println(isMatch)
-	log.Printf("route : %v\n", route)
-	if isMatch {
-		// add a check to check further subroutes, logic to be implemented
-		if route.routeMethod == r.Method {
-			if isMatch {
+	endpoints := strings.Split(r.URL.Path, "/")
+	returnFlag := false
+	url := ""
+	for i:= 0; i < len(endpoints); i++ {
+		url = url + "/" + endpoints[i]
+		route, isMatch := turboEngine.matchedRoutes[url]
+		if isMatch {
+			// add a check to check further subroutes, logic to be implemented
+			if route.routeMethod == r.Method {
 				match.Handler = route.turboHandler
-				return true
+				returnFlag = true
 			} else {
-				match.Err = ErrNotFound
-				return false
+				match.Err = MethodNotFound
+				returnFlag = false
+				break
 			}
 		} else {
-			match.Err = MethodNotFound
-			return false
+			match.Err = ErrNotFound
+			returnFlag = false
 		}
-	} else {
-		match.Err = ErrNotFound
-		return false
 	}
+	match.Err = ErrNotFound
+	return returnFlag
 }
