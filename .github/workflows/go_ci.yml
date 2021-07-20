@@ -2,7 +2,8 @@ name: Build_CI
 
 on:
   push:
-    branches: [*]
+    branches:
+      - *
     paths-ignore:
       - '.github/*'
       - 'README.md'
