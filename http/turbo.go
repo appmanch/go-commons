@@ -136,21 +136,51 @@ type MatchedTurboRoute struct {
 // Match : the function checks for the incoming request path whether it matches with the registered route's path or not
 func (turboEngine *TurboEngine) Match(r *http.Request, match *MatchedTurboRoute) bool {
 	log.Printf("matchedRoutes %v\n\n", turboEngine.matchedRoutes)
+	log.Println(r.URL.Path)
 	endpoints := strings.Split(r.URL.Path, "/")
+	log.Println(len(endpoints))
 	returnFlag := false
 	url := ""
-	for i:= 0; i < len(endpoints); i++ {
+	for i:= 1; i < len(endpoints); i++ {
 		url = url + "/" + endpoints[i]
+		log.Printf("endpoint arr : %s\n", endpoints[i])
+		log.Printf("url: %s\n", url)
 		route, isMatch := turboEngine.matchedRoutes[url]
 		if isMatch {
 			// add a check to check further subroutes, logic to be implemented
-			if route.routeMethod == r.Method {
-				match.Handler = route.turboHandler
-				returnFlag = true
+			log.Println(isMatch)
+			log.Println(route.isSubRoutePresent)
+			if route.isSubRoutePresent {
+				log.Println(url)
+				subRoutePath := "/" + strings.Join(endpoints[i+1:], "/")
+				log.Println(subRoutePath)
+				subRoute, isSubMatch := route.matchedSubRoute[subRoutePath]
+				log.Printf("issubmatch: %t\n", isSubMatch)
+				if isSubMatch {
+					if subRoute.routeMethod == r.Method {
+						match.Handler = subRoute.turboHandler
+						returnFlag = true
+						break
+					} else {
+						match.Err = MethodNotFound
+						returnFlag = false
+						break
+					}
+				} else {
+					match.Err = ErrNotFound
+					returnFlag = false
+					break
+				}
 			} else {
-				match.Err = MethodNotFound
-				returnFlag = false
-				break
+				if route.routeMethod == r.Method {
+					match.Handler = route.turboHandler
+					returnFlag = true
+					break
+				} else {
+					match.Err = MethodNotFound
+					returnFlag = false
+					break
+				}
 			}
 		} else {
 			match.Err = ErrNotFound
