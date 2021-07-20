@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"reflect"
@@ -31,6 +32,7 @@ func TestRegisterTurboEngine(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := RegisterTurboEngine(); !reflect.DeepEqual(got, tt.want) {
+				fmt.Printf("got = %#v, want = %#v\n", got, tt.want)
 				t.Errorf("RegisterTurboEngine() = %v, want %v", got, tt.want)
 			}
 		})

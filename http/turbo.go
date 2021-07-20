@@ -2,12 +2,13 @@ package http
 
 import (
 	"errors"
-	"log"
+	"go.appmanch.org/commons/logging"
 	"net/http"
 	"strings"
 )
 
 var (
+	logger = logging.GetLogger()
 	ErrNotFound = errors.New("requested route not found in the registered routes")
 	MethodNotFound = errors.New("request method not registered for the route")
 )
@@ -24,7 +25,7 @@ type TurboEngine struct {
 
 // RegisterTurboEngine : registers the new instance of the Turbo Framework
 func RegisterTurboEngine() *TurboEngine {
-	log.Println("Registering Turbo")
+	logger.Info("Registering New Turbo Instance")
 	return &TurboEngine{
 		RouteNotFoundHandler: endpointNotFoundHandler(),
 		MethodNotAllowedHandler: methodNotAllowedHandler(),
@@ -54,7 +55,7 @@ func (turboEngine *TurboEngine) Delete(path string, f func(w http.ResponseWriter
 
 // RegisterTurboRoute : registers the new route in the HTTP Server for the API
 func (turboEngine *TurboEngine) RegisterTurboRoute(path string, f func(w http.ResponseWriter, r *http.Request), method string) *TurboRoute {
-	log.Printf("Registering Route : %s\n", path)
+	logger.InfoF("Registering Route : %s", path)
 	//turboEngine.rootPath = path
 	turboRoute := turboEngine.PreWork(path, method)
 	// register a default GET method for each route, further methods can be overwritten using the StoreTurboMethod
@@ -65,7 +66,7 @@ func (turboEngine *TurboEngine) RegisterTurboRoute(path string, f func(w http.Re
 // PreWork : serves as a function to perform the necessary prework onto the routes if required
 // It serves as a middleware function which can be extended to multiple functionalities
 func (turboEngine *TurboEngine) PreWork(path string, method string) *TurboRoute {
-	log.Printf("Performing Prework : %s\n", path)
+	logger.InfoF("Performing Prework : %s", path)
 	// Add registered routes to a central store
 	turboRoute := turboEngine.StoreTurboRoutes(path, method)
 	//createMapping(path)
@@ -118,7 +119,7 @@ func (turboEngine *TurboEngine) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	if handler == nil {
-		log.Printf("handler is nil")
+		logger.InfoF("handler is nil")
 		handler = http.NotFoundHandler()
 	}
 
@@ -135,51 +136,46 @@ type MatchedTurboRoute struct {
 
 // Match : the function checks for the incoming request path whether it matches with the registered route's path or not
 func (turboEngine *TurboEngine) Match(r *http.Request, match *MatchedTurboRoute) bool {
-	log.Printf("matchedRoutes %v\n\n", turboEngine.matchedRoutes)
-	log.Println(r.URL.Path)
+	logger.InfoF("matchedRoutes %v", turboEngine.matchedRoutes)
+	logger.Info(r.URL.Path)
 	endpoints := strings.Split(r.URL.Path, "/")
-	log.Println(len(endpoints))
+	logger.Info(len(endpoints))
 	returnFlag := false
 	url := ""
 	for i:= 1; i < len(endpoints); i++ {
 		url = url + "/" + endpoints[i]
-		log.Printf("endpoint arr : %s\n", endpoints[i])
-		log.Printf("url: %s\n", url)
+		logger.InfoF("endpoint arr : %s", endpoints[i])
+		logger.InfoF("url: %s", url)
 		route, isMatch := turboEngine.matchedRoutes[url]
 		if isMatch {
 			// add a check to check further subroutes, logic to be implemented
-			log.Println(isMatch)
-			log.Println(route.isSubRoutePresent)
+			logger.Info(isMatch)
+			logger.Info(route.isSubRoutePresent)
 			if route.isSubRoutePresent {
-				log.Println(url)
+				logger.Info(url)
 				subRoutePath := "/" + strings.Join(endpoints[i+1:], "/")
-				log.Println(subRoutePath)
+				logger.Info(subRoutePath)
 				subRoute, isSubMatch := route.matchedSubRoute[subRoutePath]
-				log.Printf("issubmatch: %t\n", isSubMatch)
+				logger.InfoF("issubmatch: %t", isSubMatch)
 				if isSubMatch {
 					if subRoute.routeMethod == r.Method {
 						match.Handler = subRoute.turboHandler
-						returnFlag = true
-						break
+						return true
 					} else {
 						match.Err = MethodNotFound
-						returnFlag = false
-						break
+						return false
 					}
 				} else {
 					match.Err = ErrNotFound
 					returnFlag = false
-					break
 				}
 			} else {
 				if route.routeMethod == r.Method {
 					match.Handler = route.turboHandler
-					returnFlag = true
-					break
+					return true
 				} else {
 					match.Err = MethodNotFound
-					returnFlag = false
-					break
+					return false
 				}
 			}
 		} else {
