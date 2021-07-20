@@ -14,10 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/appmanch/go-commons/config"
-	"github.com/appmanch/go-commons/textutils"
-
-	"github.com/appmanch/go-commons/fsutils"
+	"go.appmanch.org/commons/config"
+	"go.appmanch.org/commons/fsutils"
+	"go.appmanch.org/commons/textutils"
 )
 
 //Severity of the logging levels

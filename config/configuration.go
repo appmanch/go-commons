@@ -8,7 +8,7 @@ type Configuration interface {
 
 	//ReadFrom a reader from Reader
 	ReadFrom(r io.Reader) error
-	//Write to a writer
+	//WriteTo to a writer
 	WriteTo(w io.Writer) error
 	//Get returns configuration value as string identified by the key
 	//If the value is absent then it will return defaultVal supplied.
@@ -17,7 +17,7 @@ type Configuration interface {
 	//If the value is absent then it will return defaultVal supplied.
 	//This may throw an error if a non Int value is present for the key
 	GetAsInt(k string, defaultVal int) (int, error)
-	//PutAsInt returns the config value as int64 identified by the key
+	//GetAsInt64 returns the config value as int64 identified by the key
 	//If the value is absent then it will return defaultVal supplied.
 	//This may throw an error if a non int64 value is present for the key
 	GetAsInt64(k string, defaultVal int64) (int64, error)
@@ -32,15 +32,15 @@ type Configuration interface {
 	//Put returns configuration value as string identified by the key
 	//If the value is absent then it will return defaultVal supplied.
 	Put(k, v string) string
-	//PutAsInt returns the config value as int64 identified by the key
+	//PutInt returns the config value as int64 identified by the key
 	//If the value is absent then it will return defaultVal supplied.
 	//This may throw an error if a non Int value is present for the key
 	PutInt(k string, v int) (int, error)
-	//PutAsInt64 returns the config value as int64 identified by the key
+	//PutInt64 returns the config value as int64 identified by the key
 	//If the value is absent then it will return defaultVal supplied.
 	//This may throw an error if a non int64 value is present for the key
 	PutInt64(k string, v int64) (int64, error)
-	//PutAsBool returns the config value as bool identified by the key
+	//PutBool returns the config value as bool identified by the key
 	//If the value is absent then it will return defaultVal supplied.
 	//This may throw an error if a non bool value is present for the key
 	PutBool(k string, v bool) (bool, error)
