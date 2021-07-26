@@ -15,9 +15,8 @@ import (
 	"time"
 
 	"go.appmanch.org/commons/config"
-	"go.appmanch.org/commons/textutils"
-
 	"go.appmanch.org/commons/fsutils"
+	"go.appmanch.org/commons/textutils"
 )
 
 //Severity of the logging levels
