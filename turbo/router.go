@@ -67,7 +67,7 @@ type QueryParam struct {
 	// TODO add mechanism for creating a typed query parameter to do auto type conversion in the framework.
 }
 
-//New Create a new Router
+//NewRouter Creates a new Router
 func NewRouter() *Router {
 	return &Router{
 		unManagedRouteHandler:    nil,
@@ -83,17 +83,17 @@ func (r *Router) Get(path string, handler http.Handler) (*Route, error) {
 
 //Post route : Add a turbo handler for post method
 func (r *Router) Post(path string, handler http.Handler) (*Route, error) {
-	return r.Add(path, handler, GET)
+	return r.Add(path, handler, POST)
 }
 
 //Put route : Add a turbo handler for put method
 func (r *Router) Put(path string, handler http.Handler) (*Route, error) {
-	return r.Add(path, handler, GET)
+	return r.Add(path, handler, PUT)
 }
 
 //Delete route : Add a turbo handler for delete method
 func (r *Router) Delete(path string, handler http.Handler) (*Route, error) {
-	return r.Add(path, handler, GET)
+	return r.Add(path, handler, DELETE)
 }
 
 //Add route : Add a turbo handler for one or more HTTP methods.
@@ -168,6 +168,19 @@ func (r *Router) Add(path string, handler http.Handler, methods ...string) (*Rou
 		}
 	} else {
 		//TODO Handle the Root context path
+		currentRoute := &Route{
+			path:         "",
+			isPathVar:    false,
+			childVarName: "",
+			handlers:     make(map[string]http.Handler),
+			subRoutes:    make(map[string]*Route),
+			queryParams:  make(map[string]*QueryParam),
+		}
+		for _, method := range methods {
+			currentRoute.handlers[method] = handler
+		}
+		//Root route will not have any path value
+		r.topLevelRoutes[""] = currentRoute
 
 	}
 	return route, nil
