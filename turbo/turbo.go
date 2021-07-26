@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go.appmanch.org/commons/textutils"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -55,7 +56,7 @@ type Router struct {
 
 //Route : TODO Documentation
 type Route struct {
-
+	Err error
 	//name of the route fragment if this is a path variable the name of the variable will be used here.
 	path string
 	//Checks if this is a variable. only one path variable at this level will be supported.
@@ -79,14 +80,13 @@ type QueryParam struct {
 	// TODO add mechanism for creating a typed query parameter to do auto type conversion in the framework.
 }
 
-// Get : registers the new instance of the Turbo Framework
-func Get() *Router {
-	return GetNamed(textutils.EmptyStr)
-
+// New : registers the new instance of the Turbo Framework
+func New() *Router {
+	return NewGroup(textutils.EmptyStr)
 }
 
-// GetNamed : registers the new instance of the Turbo Framework
-func GetNamed(name string) *Router {
+// NewGroup : registers the new instance of the Turbo Framework
+func NewGroup(name string) *Router {
 	lock.Lock()
 	defer lock.Unlock()
 	logger.Info("Registering New Turbo Instance")
@@ -105,27 +105,27 @@ func GetNamed(name string) *Router {
 }
 
 //Get route : Add a turbo handler for get method
-func (router *Router) Get(path string, handler http.Handler) (*Route, error) {
-	return router.Add(path, handler, GET)
+func (router *Router) Get(path string, f func(w http.ResponseWriter, r *http.Request)) (*Route, error) {
+	return router.Add(path, f, GET)
 }
 
 //Post route : Add a turbo handler for post method
-func (router *Router) Post(path string, handler http.Handler) (*Route, error) {
-	return router.Add(path, handler, POST)
+func (router *Router) Post(path string, f func(w http.ResponseWriter, r *http.Request)) (*Route, error) {
+	return router.Add(path, f, POST)
 }
 
 //Put route : Add a turbo handler for put method
-func (router *Router) Put(path string, handler http.Handler) (*Route, error) {
-	return router.Add(path, handler, PUT)
+func (router *Router) Put(path string, f func(w http.ResponseWriter, r *http.Request)) (*Route, error) {
+	return router.Add(path, f, PUT)
 }
 
 //Delete route : Add a turbo handler for delete method
-func (router *Router) Delete(path string, handler http.Handler) (*Route, error) {
-	return router.Add(path, handler, DELETE)
+func (router *Router) Delete(path string, f func(w http.ResponseWriter, r *http.Request)) (*Route, error) {
+	return router.Add(path, f, DELETE)
 }
 
 //Add route : Add a turbo handler for one or more HTTP methods.
-func (router *Router) Add(path string, handler http.Handler, methods ...string) (*Route, error) {
+func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Request), methods ...string) (*Route, error) {
 	lock.Lock()
 	defer lock.Unlock()
 	//Check if the methods provided are valid if not return error straight away
@@ -139,20 +139,22 @@ func (router *Router) Add(path string, handler http.Handler, methods ...string) 
 	pathValue := strings.TrimSpace(path)
 
 	pathValues := strings.Split(pathValue, PathSeparator)[1:]
+	log.Println(pathValues)
 	length := len(pathValues)
 	var route *Route = nil
 	if length > 0 && pathValues[0] != textutils.EmptyStr {
 		isPathVar := false
 		name := ""
-
 		for i, pathValue := range pathValues {
+			log.Println(pathValue)
 			isPathVar = pathValue[0] == ':'
+			log.Println(isPathVar)
 			if isPathVar {
 				name = pathValue[1:]
 			} else {
 				name = pathValue
 			}
-
+			log.Printf("Name: %s\n", name)
 			currentRoute := &Route{
 				path:         name,
 				isPathVar:    isPathVar,
@@ -163,9 +165,11 @@ func (router *Router) Add(path string, handler http.Handler, methods ...string) 
 			}
 
 			if route == nil {
+				log.Println("Route is nil")
 				if v, ok := router.topLevelRoutes[name]; ok {
 					route = v
 				} else {
+					log.Println(currentRoute.isPathVar)
 					//No Parent present add the current route as route and continue
 					if currentRoute.isPathVar {
 						return nil, errors.New("the framework does not support path variables at root context")
@@ -174,6 +178,7 @@ func (router *Router) Add(path string, handler http.Handler, methods ...string) 
 					route = currentRoute
 				}
 			} else {
+				log.Println("Route is not nil")
 				if v, ok := route.subRoutes[name]; ok {
 					if v.isPathVar && isPathVar && v.path != name {
 						return nil, errors.New("one path cannot have multiple names")
@@ -191,10 +196,11 @@ func (router *Router) Add(path string, handler http.Handler, methods ...string) 
 			//At Last index add the method(s) to the map.
 			if i == len(pathValues)-1 {
 				for _, method := range methods {
-					currentRoute.handlers[method] = handler
+					currentRoute.handlers[method] = http.HandlerFunc(f)
 				}
 			}
-
+			log.Printf("CurrentRoute : %v\n", currentRoute)
+			log.Printf("Handlers: %v\n", currentRoute.handlers)
 		}
 	} else {
 		//TODO Handle the Root context path
@@ -207,14 +213,13 @@ func (router *Router) Add(path string, handler http.Handler, methods ...string) 
 			queryParams:  make(map[string]*QueryParam),
 		}
 		for _, method := range methods {
-			currentRoute.handlers[method] = prepareHandler(method, handler)
+			currentRoute.handlers[method] = prepareHandler(method, http.HandlerFunc(f))
 		}
 		//Root route will not have any path value
 		router.topLevelRoutes[""] = currentRoute
-
 	}
+	log.Printf("Registered Route: %v\n", route)
 	return route, nil
-
 }
 
 //Any default features like logging, auth etc will be injected here
@@ -263,7 +268,7 @@ func (r *Route) addQueryVar(name string, required bool) *Route {
 // ServeHTTP :
 func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
-	var match MatchedTurboRoute
+	var match Route
 	var handler http.Handler
 
 	// perform the path checks before, set the 301 status even before further computation
@@ -283,7 +288,7 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// start by checking where the method of the Request is same as that of the registered method
 	if router.Match(r, &match) {
-		handler = match.Handler
+		handler = match.handlers[r.Method]
 	}
 
 	if handler == nil && match.Err == MethodNotFound {
@@ -300,18 +305,11 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handler.ServeHTTP(w, r)
 }
 
-// MatchedTurboRoute :
-type MatchedTurboRoute struct {
-	TurboRoute *TurboRoute
-	Handler    http.Handler
-	Vars       map[string]string
-	Err        error
-}
 
 // Match : the function checks for the incoming request path whether it matches with the registered route's path or not
 func (router *Router) Match(r *http.Request, route *Route) bool {
 
-	return false
+	return true
 }
 
 //// Match : the function checks for the incoming request path whether it matches with the registered route's path or not
