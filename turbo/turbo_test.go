@@ -1,39 +1,92 @@
 package turbo
 
 import (
-	"fmt"
-	"log"
+	"context"
 	"net/http"
+	"net/url"
 	"reflect"
 	"testing"
 )
 
-func TestFunction(t *testing.T) {
-	router := RegisterTurboEngine()
-	router.Get("/api/v1/hello", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello from turbo"))
-	})
-	log.Println(router.GetRoutes())
-}
+var router = Get()
 
-// create mock server route tests
-
-func TestRegisterTurboEngine(t *testing.T) {
+func TestRouter_findRoute(t *testing.T) {
+	var tlr = make(map[string]*Route)
+	type fields struct {
+		unManagedRouteHandler    http.Handler
+		unsupportedMethodHandler http.Handler
+		topLevelRoutes           map[string]*Route
+	}
+	type args struct {
+		req *http.Request
+	}
+	route := &Route{
+		path:         "abc",
+		isPathVar:    false,
+		childVarName: "",
+		handlers:     make(map[string]http.Handler),
+		subRoutes:    make(map[string]*Route),
+		queryParams:  nil,
+	}
+	tlr["abc"]=route
+	testUrl, _ := url.Parse("/abc")
+	a := args{req: &http.Request{
+		Method:           "",
+		URL:              testUrl,
+		Proto:            "",
+		ProtoMajor:       0,
+		ProtoMinor:       0,
+		Header:           nil,
+		Body:             nil,
+		GetBody:          nil,
+		ContentLength:    0,
+		TransferEncoding: nil,
+		Close:            false,
+		Host:             "",
+		Form:             nil,
+		PostForm:         nil,
+		MultipartForm:    nil,
+		Trailer:          nil,
+		RemoteAddr:       "",
+		RequestURI:       "",
+		TLS:              nil,
+		Cancel:           nil,
+		Response:         nil,
+	}}
 	tests := []struct {
-		name string
-		want *TurboEngine
+		name   string
+		fields fields
+		args args
+		want   *Route
+		want1  context.Context
 	}{
 		// TODO: Add test cases.
 		{
-			name: "TurboEngine",
-			want: RegisterTurboEngine(),
+			name: "Test1",
+			fields: fields{
+				unManagedRouteHandler:    nil,
+				unsupportedMethodHandler: nil,
+				topLevelRoutes:           tlr,
+			},
+			args: a,
+			want: route,
+			want1: nil,
 		},
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := RegisterTurboEngine(); !reflect.DeepEqual(got, tt.want) {
-				fmt.Printf("got = %#v, want = %#v\n", got, tt.want)
-				t.Errorf("RegisterTurboEngine() = %v, want %v", got, tt.want)
+			router := &Router{
+				unManagedRouteHandler:    tt.fields.unManagedRouteHandler,
+				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
+				topLevelRoutes:           tt.fields.topLevelRoutes,
+			}
+			got, got1 := router.findRoute(tt.args.req)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("findRoute() got = %v, want %v", got, tt.want)
+			}
+			if !reflect.DeepEqual(got1, tt.want1) {
+				t.Errorf("findRoute() got1 = %v, want %v", got1, tt.want1)
 			}
 		})
 	}

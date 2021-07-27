@@ -2,6 +2,17 @@
 
 The go-commons `http` package provides enterprise grade http routing capabilities.
 
+### Benchmarking
+
+#### Commands
+```shell
+go test -bench=. -benchtime Nx
+```
+Memory Profiling
+```shell
+go test -bench=. -benchtime Nx -benchmem
+```
+
 ### Common Usage
 ```go
 func main() {
