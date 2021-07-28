@@ -194,16 +194,16 @@ func prepareHandler(method string, handler http.Handler) http.Handler {
 }
 
 func (r *Route) DebugPrintRoute() {
-	logger.InfoF("path: ", r.path, ", isPathVar: ", r.isPathVar, ", childVarName: ", r.childVarName)
+	logger.InfoF("path: %s , isPathVar: %t , childVarName: %s", r.path, r.isPathVar, r.childVarName)
 	for k, v := range r.subRoutes {
-		logger.InfoF("Printing Info of sub route ", k)
+		logger.InfoF("Printing Info of sub route %s", k)
 		v.DebugPrintRoute()
 	}
 }
 
 func (router *Router) DebugPrint() {
 	for k, v := range router.topLevelRoutes {
-		logger.InfoF("Printing Info of Top route ", k)
+		logger.InfoF("Printing Info of Top route %s", k)
 		v.DebugPrintRoute()
 	}
 }
