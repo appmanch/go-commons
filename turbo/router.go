@@ -194,16 +194,16 @@ func prepareHandler(method string, handler http.Handler) http.Handler {
 }
 
 func (r *Route) DebugPrintRoute() {
-	fmt.Println("path: ", r.path, ", isPathVar: ", r.isPathVar, ", childVarName: ", r.childVarName)
+	logger.InfoF("path: ", r.path, ", isPathVar: ", r.isPathVar, ", childVarName: ", r.childVarName)
 	for k, v := range r.subRoutes {
-		fmt.Println("Printing Info of sub route ", k)
+		logger.InfoF("Printing Info of sub route ", k)
 		v.DebugPrintRoute()
 	}
 }
 
 func (router *Router) DebugPrint() {
 	for k, v := range router.topLevelRoutes {
-		fmt.Println("Printing Info of Top route ", k)
+		logger.InfoF("Printing Info of Top route ", k)
 		v.DebugPrintRoute()
 	}
 }
@@ -233,7 +233,7 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMovedPermanently)
 		_, err := w.Write([]byte("Path Moved : " + p + "\n"))
 		if err != nil {
-			logger.ErrorF("", err)
+			logger.Error(err)
 		}
 		return
 	}
