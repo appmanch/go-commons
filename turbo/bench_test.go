@@ -41,7 +41,7 @@ func BenchmarkFindRouteStatic(b *testing.B) {
 	}
 }
 
-// BenchmarkFindRoutePathParam: Static Path Test
+// BenchmarkFindRoutePathParam: Path Param Test
 func BenchmarkFindRoutePathParam(b *testing.B) {
 	router.Get("/api/v1/health/:id", func (w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode([]byte("hello from turbo"))

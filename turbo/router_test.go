@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-var router = Get()
+var router = New()
 
 func TestRouter_findRoute(t *testing.T) {
 	var tlr = make(map[string]*Route)

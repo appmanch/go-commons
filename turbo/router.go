@@ -2,17 +2,12 @@ package turbo
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"go.appmanch.org/commons/textutils"
 	"net/http"
 	"strings"
 	"sync"
-)
 
-var (
-	ErrNotFound    = errors.New("requested route not found in the registered routes")
-	MethodNotFound = errors.New("request method not registered for the route")
+	"go.appmanch.org/commons/textutils"
 )
 
 //PathSeparator constant that holds the path separator for the URIs
@@ -39,11 +34,9 @@ var Methods = map[string]string{
 	PATCH:   PATCH,
 }
 
-var routers = make(map[string]*Router)
-var lock = sync.RWMutex{}
-
 // Router router struct that holds the router configuration
 type Router struct {
+	lock sync.RWMutex
 	//Handler for any route that is not defined
 	unManagedRouteHandler http.Handler
 	//Handler for any methods that are not supported
@@ -70,46 +63,48 @@ type Route struct {
 
 //QueryParam for the Route configuration
 type QueryParam struct {
-	//required flag
+	//required flag : fail upfront if a required query param not present
 	required bool
 	//name of the query parameter
 	name string
 	// TODO add mechanism for creating a typed query parameter to do auto type conversion in the framework.
 }
 
-// Get : registers the new instance of the Turbo Framework
-func Get() *Router {
+// New : registers the new instance of the Turbo Framework
+func New() *Router {
+	logger.InfoF("Initiating Turbo")
 	return &Router{
+		lock:                     sync.RWMutex{},
 		unManagedRouteHandler:    endpointNotFoundHandler(),
 		unsupportedMethodHandler: methodNotAllowedHandler(),
 		topLevelRoutes:           make(map[string]*Route),
 	}
 }
 
-//Get route : Add a turbo handler for get method
+//Get route : Add a turbo handler for GET method
 func (router *Router) Get(path string, f func(w http.ResponseWriter, r *http.Request)) *Route {
 	return router.Add(path, f, GET)
 }
 
-//Post route : Add a turbo handler for post method
+//Post route : Add a turbo handler for POST method
 func (router *Router) Post(path string, f func(w http.ResponseWriter, r *http.Request)) *Route {
 	return router.Add(path, f, POST)
 }
 
-//Put route : Add a turbo handler for put method
+//Put route : Add a turbo handler for PUT method
 func (router *Router) Put(path string, f func(w http.ResponseWriter, r *http.Request)) *Route {
 	return router.Add(path, f, PUT)
 }
 
-//Delete route : Add a turbo handler for delete method
+//Delete route : Add a turbo handler for DELETE method
 func (router *Router) Delete(path string, f func(w http.ResponseWriter, r *http.Request)) *Route {
 	return router.Add(path, f, DELETE)
 }
 
 //Add route : Add a turbo handler for one or more HTTP methods.
 func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Request), methods ...string) *Route {
-	lock.Lock()
-	defer lock.Unlock()
+	router.lock.Lock()
+	defer router.lock.Unlock()
 	var route *Route = nil
 	//Check if the methods provided are valid if not return error straight away
 	for _, method := range methods {
@@ -117,15 +112,18 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 			panic(fmt.Sprintf("Invalid/Unsupported Http method  %s provided", method))
 		}
 	}
+	logger.InfoF("Registering New Route: %s\n", path)
 	//TODO add path check for any query variables specified.
 	pathValue := strings.TrimSpace(path)
 	pathValues := strings.Split(pathValue, PathSeparator)[1:]
 	length := len(pathValues)
 	if length > 0 && pathValues[0] != textutils.EmptyStr {
 		isPathVar := false
-		name := ""
+		name := textutils.EmptyStr
 		for i, pathValue := range pathValues {
-			isPathVar = pathValue[0] == ':'
+			// TODO check for the datatype provided as input
+			// /api/v1/getCustomer/:id:int32
+			isPathVar = pathValue[0] == textutils.ColonChar
 			if isPathVar {
 				name = pathValue[1:]
 			} else {
@@ -134,7 +132,7 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 			currentRoute := &Route{
 				path:         name,
 				isPathVar:    isPathVar,
-				childVarName: "",
+				childVarName: textutils.EmptyStr,
 				handlers:     make(map[string]http.Handler),
 				subRoutes:    make(map[string]*Route),
 				queryParams:  make(map[string]*QueryParam),
@@ -174,9 +172,9 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 	} else {
 		//TODO Handle the Root context path
 		currentRoute := &Route{
-			path:         "",
+			path:         textutils.EmptyStr,
 			isPathVar:    false,
-			childVarName: "",
+			childVarName: textutils.EmptyStr,
 			handlers:     make(map[string]http.Handler),
 			subRoutes:    make(map[string]*Route),
 			queryParams:  make(map[string]*QueryParam),
@@ -185,7 +183,7 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 			currentRoute.handlers[method] = prepareHandler(method, http.HandlerFunc(f))
 		}
 		//Root route will not have any path value
-		router.topLevelRoutes[""] = currentRoute
+		router.topLevelRoutes[textutils.EmptyStr] = currentRoute
 	}
 	return route
 }
@@ -235,7 +233,7 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMovedPermanently)
 		_, err := w.Write([]byte("Path Moved : " + p + "\n"))
 		if err != nil {
-			return
+			logger.ErrorF("", err)
 		}
 		return
 	}
@@ -253,11 +251,11 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // findRoute : the function checks for the incoming request path whether it matches with the registered route's path or not
-func (router *Router)findRoute(req *http.Request) (*Route, context.Context) {
+func (router *Router) findRoute(req *http.Request) (*Route, context.Context) {
 	inReq := strings.Split(req.URL.Path, PathSeparator)[1:]
 	var route *Route
-	var ctx context.Context
-	for _,val := range inReq {
+	ctx := req.Context()
+	for _, val := range inReq {
 		if route == nil {
 			route = router.topLevelRoutes[val]
 			continue
@@ -272,9 +270,26 @@ func (router *Router)findRoute(req *http.Request) (*Route, context.Context) {
 				}
 			}
 			if route.isPathVar {
-				ctx = context.WithValue(req.Context(), route.path, val)
+				ctx = context.WithValue(ctx, route.path, val)
 			}
 		}
 	}
 	return route, ctx
 }
+
+func (router *Router) GetPathParams(id string, r *http.Request) string {
+	val, ok := r.Context().Value(id).(string)
+	if !ok {
+		logger.ErrorF("Error Fetching Path Param %s", id)
+	}
+	return val
+}
+
+// TODO rest of the DataTypes functions need to be exposed
+
+// create a get path variable function
+// getPathParam(req, paramName)
+// getIntPathParam
+// getString
+// getBool
+// getFloatPathParam
