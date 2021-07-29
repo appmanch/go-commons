@@ -3,6 +3,7 @@ package turbo
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -48,7 +49,8 @@ type Router struct {
 //Route : TODO Documentation
 type Route struct {
 	//name of the route fragment if this is a path variable the name of the variable will be used here.
-	path string
+	path      string
+	paramType string
 	//Checks if this is a variable. only one path variable at this level will be supported.
 	isPathVar bool
 	//childVarName varName
@@ -70,8 +72,8 @@ type QueryParam struct {
 	// TODO add mechanism for creating a typed query parameter to do auto type conversion in the framework.
 }
 
-// New : registers the new instance of the Turbo Framework
-func New() *Router {
+// NewRouter : registers the new instance of the Turbo Framework
+func NewRouter() *Router {
 	logger.InfoF("Initiating Turbo")
 	return &Router{
 		lock:                     sync.RWMutex{},
@@ -120,17 +122,23 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 	if length > 0 && pathValues[0] != textutils.EmptyStr {
 		isPathVar := false
 		name := textutils.EmptyStr
+		paramType := textutils.EmptyStr
 		for i, pathValue := range pathValues {
 			// TODO check for the datatype provided as input
 			// /api/v1/getCustomer/:id:int32
 			isPathVar = pathValue[0] == textutils.ColonChar
 			if isPathVar {
-				name = pathValue[1:]
+				pathVarData := strings.Split(pathValue[1:], ":")
+				name = pathVarData[0]
+				paramType = pathVarData[1]
 			} else {
 				name = pathValue
 			}
+			log.Println(name)
+			log.Println(paramType)
 			currentRoute := &Route{
 				path:         name,
+				paramType:    paramType,
 				isPathVar:    isPathVar,
 				childVarName: textutils.EmptyStr,
 				handlers:     make(map[string]http.Handler),
@@ -287,9 +295,66 @@ func (router *Router) GetPathParams(id string, r *http.Request) string {
 
 // TODO rest of the DataTypes functions need to be exposed
 
-// create a get path variable function
-// getPathParam(req, paramName)
-// getIntPathParam
-// getString
-// getBool
-// getFloatPathParam
+func (router *Router) GetIntPathParams(id string, r *http.Request) int {
+	val, ok := r.Context().Value(id).(int)
+	if !ok {
+		logger.ErrorF("Error Fetching Path Param %s", id)
+	}
+	return val
+}
+
+func (router *Router) GetInt8PathParams(id string, r *http.Request) int8 {
+	val, ok := r.Context().Value(id).(int8)
+	if !ok {
+		logger.ErrorF("Error Fetching Path Param %s", id)
+	}
+	return val
+}
+
+func (router *Router) GetInt16PathParams(id string, r *http.Request) int16 {
+	val, ok := r.Context().Value(id).(int16)
+	if !ok {
+		logger.ErrorF("Error Fetching Path Param %s", id)
+	}
+	return val
+}
+
+func (router *Router) GetInt32PathParams(id string, r *http.Request) int32 {
+	val, ok := r.Context().Value(id).(int32)
+	if !ok {
+		logger.ErrorF("Error Fetching Path Param %s", id)
+	}
+	return val
+}
+
+func (router *Router) GetInt64PathParams(id string, r *http.Request) int64 {
+	val, ok := r.Context().Value(id).(int64)
+	if !ok {
+		logger.ErrorF("Error Fetching Path Param %s", id)
+	}
+	return val
+}
+
+func (router *Router) GetFloat32PathParams(id string, r *http.Request) float32 {
+	val, ok := r.Context().Value(id).(float32)
+	if !ok {
+		logger.ErrorF("Error Fetching Path Param %s", id)
+	}
+	return val
+}
+
+func (router *Router) GetFloat64PathParams(id string, r *http.Request) float64 {
+	val, ok := r.Context().Value(id).(float64)
+	if !ok {
+		logger.ErrorF("Error Fetching Path Param %s", id)
+	}
+	return val
+}
+
+func (router *Router) GetBoolPathParams(id string, r *http.Request) bool {
+	val, ok := r.Context().Value(id).(bool)
+	if !ok {
+		logger.ErrorF("Error Fetching Path Param %s", id)
+	}
+	return val
+}
