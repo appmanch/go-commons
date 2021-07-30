@@ -15,7 +15,6 @@ func TestNewRouter(t *testing.T) {
 		name string
 		want *Router
 	}{
-		// TODO: Add test cases.
 		{
 			name: "InitTest",
 			want: NewRouter(),
@@ -51,27 +50,7 @@ func TestRouter_findRoute(t *testing.T) {
 	tlr["abc"]=route
 	testUrl, _ := url.Parse("/abc")
 	a := args{req: &http.Request{
-		Method:           "",
 		URL:              testUrl,
-		Proto:            "",
-		ProtoMajor:       0,
-		ProtoMinor:       0,
-		Header:           nil,
-		Body:             nil,
-		GetBody:          nil,
-		ContentLength:    0,
-		TransferEncoding: nil,
-		Close:            false,
-		Host:             "",
-		Form:             nil,
-		PostForm:         nil,
-		MultipartForm:    nil,
-		Trailer:          nil,
-		RemoteAddr:       "",
-		RequestURI:       "",
-		TLS:              nil,
-		Cancel:           nil,
-		Response:         nil,
 	}}
 	tests := []struct {
 		name   string
@@ -80,7 +59,6 @@ func TestRouter_findRoute(t *testing.T) {
 		want   *Route
 		want1  context.Context
 	}{
-		// TODO: Add test cases.
 		{
 			name: "Test1",
 			fields: fields{
@@ -235,5 +213,4 @@ func TestRouter_GetIntPathParams(t *testing.T) {
 		})
 	}
 }
-
 

@@ -55,18 +55,52 @@ func main() {
     4. DELETE
 2. Routes can be registered in the following ways
     1. Registering Static Routes
-
         ```go
         router.Get("/api/v1/getCustomers", getCustomers) 
         ```
 
-    2. Register Path Variables
-
-       The path variables need to be registered with their type upfront
-
+    2. Registering with Path Variables
+       
+       _The path variables need to be registered with their type upfront_
         ```go
         router.Get("/api/v1/getCustomer/:id:int32", getCustomer)
         ```
 
 3. Path Params can be fetched with the built-in wrapper provided by the framework
-    1. The framework exposes a number of functions based on the type of variable that has been registered with the route
+    * The framework exposes a number of functions based on the type of variable that has been registered with the route
+        * To fetch string parameters
+            ```go
+            getPathParms(id string, r *http.Request) string {}
+            ```
+        * To Fetch Int parameters
+            ```go
+            getIntPathParms(id string, r *http.Request) int {}
+            ```
+        * To fetch Float64 parameters
+           ```go
+           getFloatPathParms(id string, r *http.Request) float64 {}
+           ```
+        * To Fetch Boolean parameters
+           ```go
+           getBoolPathParms(id string, r *http.Request) bool {}
+           ```
+          
+4. Query Parameters can also be fetched with a built-in wrapper functions provided by the framework
+    * The Framework exposes a number of wrapper functions which lets you fetch the query params of specific data type required
+        * To fetch string query params
+            ```go
+            GetQueryParams(id string, r *http.Request) string {}
+            ```
+        * To Fetch Int query params
+            ```go
+            GetIntQueryParams(id string, r *http.Request) int {}
+            ```
+        * To fetch Float64 query params
+           ```go
+           GetFloatQueryParams(id string, r *http.Request) float64 {}
+           ```
+        * To Fetch Boolean query params
+           ```go
+           GetBoolQueryParams(id string, r *http.Request) bool {}
+           ```
+            

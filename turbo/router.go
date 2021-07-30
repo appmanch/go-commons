@@ -3,10 +3,8 @@ package turbo
 import (
 	"context"
 	"fmt"
-	"go/types"
 	"log"
 	"net/http"
-	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -176,7 +174,7 @@ func prepareHandler(method string, handler http.Handler) http.Handler {
 }
 
 func (route *Route) DebugPrintRoute() {
-	logger.InfoF("path: %s , isPathVar: %t , childVarName: %s", r.path, r.isPathVar, r.childVarName)
+	logger.InfoF("path: %s , isPathVar: %t , childVarName: %s", route.path, route.isPathVar, route.childVarName)
 	for k, v := range route.subRoutes {
 		logger.InfoF("Printing Info of sub route %s", k)
 		v.DebugPrintRoute()
