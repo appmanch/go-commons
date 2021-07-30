@@ -5,13 +5,12 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
-	"sync"
 	"testing"
 )
 
 var router = NewRouter()
 
-/*func TestNewRouter(t *testing.T) {
+func TestNewRouter(t *testing.T) {
 	tests := []struct {
 		name string
 		want *Router
@@ -19,17 +18,17 @@ var router = NewRouter()
 		// TODO: Add test cases.
 		{
 			name: "InitTest",
-			want: router,
+			want: NewRouter(),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewRouter(); !reflect.DeepEqual(got, tt.want) {
+			if got := NewRouter(); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
 				t.Errorf("NewRouter() = %v, want %v", got, tt.want)
 			}
 		})
 	}
-}*/
+}
 
 func TestRouter_findRoute(t *testing.T) {
 	var tlr = make(map[string]*Route)
@@ -114,38 +113,16 @@ func TestRouter_findRoute(t *testing.T) {
 }
 
 func TestRouter_GetPathParams(t *testing.T) {
-	req := &http.Request{
-		Method:           "",
-		URL:              nil,
-		Proto:            "",
-		ProtoMajor:       0,
-		ProtoMinor:       0,
-		Header:           nil,
-		Body:             nil,
-		GetBody:          nil,
-		ContentLength:    0,
-		TransferEncoding: nil,
-		Close:            false,
-		Host:             "",
-		Form:             nil,
-		PostForm:         nil,
-		MultipartForm:    nil,
-		Trailer:          nil,
-		RemoteAddr:       "",
-		RequestURI:       "",
-		TLS:              nil,
-		Cancel:           nil,
-		Response:         nil,
-	}
+	req := &http.Request{}
 	type fields struct {
-		lock                     sync.RWMutex
 		unManagedRouteHandler    http.Handler
 		unsupportedMethodHandler http.Handler
 		topLevelRoutes           map[string]*Route
 	}
 	type args struct {
 		id string
-		val
+		val string
+		r *http.Request
 	}
 	tests := []struct {
 		name   string
@@ -153,37 +130,110 @@ func TestRouter_GetPathParams(t *testing.T) {
 		args   args
 		want   string
 	}{
-		// TODO: Add test cases.
 		{
 			name: "Test1",
 			fields: fields{
-				lock:                     sync.RWMutex{},
 				unManagedRouteHandler:    nil,
 				unsupportedMethodHandler: nil,
 				topLevelRoutes:           nil,
 			},
 			args: args{
 				id: "key",
-				val: struct{
-					valType string
-				}{
-					valType: "string",
-				},
+				val: "value",
+				r: req,
 			},
+			want: "value",
+		},
+		{
+			name: "Test2",
+			fields: fields{
+				unManagedRouteHandler:    nil,
+				unsupportedMethodHandler: nil,
+				topLevelRoutes:           nil,
+			},
+			args: args{
+				id:  "key2",
+				val: "123",
+				r:   req,
+			},
+			want: "123",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			router := &Router{
-				lock:                     tt.fields.lock,
 				unManagedRouteHandler:    tt.fields.unManagedRouteHandler,
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
 			ctx := context.WithValue(context.Background(), tt.args.id, tt.args.val)
-			if got := router.GetPathParams(tt.args.id, tt.args.r.WithContext(ctx)); got != tt.want {
+			if got := router.GetPathParams(tt.args.id, tt.args.r.WithContext(ctx)); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
 				t.Errorf("GetPathParams() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
+
+func TestRouter_GetIntPathParams(t *testing.T) {
+	req := &http.Request{}
+	type fields struct {
+		unManagedRouteHandler    http.Handler
+		unsupportedMethodHandler http.Handler
+		topLevelRoutes           map[string]*Route
+	}
+	type args struct {
+		id string
+		val int
+		r *http.Request
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   int
+	}{
+		{
+			name: "Test1",
+			fields: fields{
+				unManagedRouteHandler:    nil,
+				unsupportedMethodHandler: nil,
+				topLevelRoutes:           nil,
+			},
+			args: args{
+				id: "key",
+				val: 2134,
+				r: req,
+			},
+			want: 2134,
+		},
+		{
+			name: "Test2",
+			fields: fields{
+				unManagedRouteHandler:    nil,
+				unsupportedMethodHandler: nil,
+				topLevelRoutes:           nil,
+			},
+			args: args{
+				id:  "key2",
+				val: 123124124123123,
+				r:   req,
+			},
+			want: 123124124123123,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := &Router{
+				unManagedRouteHandler:    tt.fields.unManagedRouteHandler,
+				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
+				topLevelRoutes:           tt.fields.topLevelRoutes,
+			}
+			ctx := context.WithValue(context.Background(), tt.args.id, tt.args.val)
+			if got := router.GetIntPathParams(tt.args.id, tt.args.r.WithContext(ctx)); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+				t.Errorf("GetPathParams() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+

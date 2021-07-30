@@ -5,6 +5,30 @@ import (
 	"path"
 )
 
+//Common constants used throughout
+const (
+	PathSeparator = "/"
+	GET           = "GET"
+	HEAD          = "HEAD"
+	POST          = "POST"
+	PUT           = "PUT"
+	DELETE        = "DELETE"
+	OPTIONS       = "OPTIONS"
+	TRACE         = "TRACE"
+	PATCH         = "PATCH"
+)
+
+var Methods = map[string]string{
+	GET:     GET,
+	HEAD:    HEAD,
+	POST:    POST,
+	PUT:     PUT,
+	DELETE:  DELETE,
+	OPTIONS: OPTIONS,
+	TRACE:   TRACE,
+	PATCH:   PATCH,
+}
+
 // refinePath
 // Borrowed from the golang's net/turbo package
 func refinePath(p string) string {

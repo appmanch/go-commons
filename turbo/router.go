@@ -3,37 +3,16 @@ package turbo
 import (
 	"context"
 	"fmt"
+	"go/types"
 	"log"
 	"net/http"
+	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 
 	"go.appmanch.org/commons/textutils"
 )
-
-//PathSeparator constant that holds the path separator for the URIs
-const (
-	PathSeparator = "/"
-	GET           = "GET"
-	HEAD          = "HEAD"
-	POST          = "POST"
-	PUT           = "PUT"
-	DELETE        = "DELETE"
-	OPTIONS       = "OPTIONS"
-	TRACE         = "TRACE"
-	PATCH         = "PATCH"
-)
-
-var Methods = map[string]string{
-	GET:     GET,
-	HEAD:    HEAD,
-	POST:    POST,
-	PUT:     PUT,
-	DELETE:  DELETE,
-	OPTIONS: OPTIONS,
-	TRACE:   TRACE,
-	PATCH:   PATCH,
-}
 
 // Router router struct that holds the router configuration
 type Router struct {
@@ -122,23 +101,18 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 	if length > 0 && pathValues[0] != textutils.EmptyStr {
 		isPathVar := false
 		name := textutils.EmptyStr
-		paramType := textutils.EmptyStr
 		for i, pathValue := range pathValues {
 			// TODO check for the datatype provided as input
 			// /api/v1/getCustomer/:id:int32
 			isPathVar = pathValue[0] == textutils.ColonChar
 			if isPathVar {
-				pathVarData := strings.Split(pathValue[1:], ":")
-				name = pathVarData[0]
-				paramType = pathVarData[1]
+				name = pathValue[1:]
 			} else {
 				name = pathValue
 			}
 			log.Println(name)
-			log.Println(paramType)
 			currentRoute := &Route{
 				path:         name,
-				paramType:    paramType,
 				isPathVar:    isPathVar,
 				childVarName: textutils.EmptyStr,
 				handlers:     make(map[string]http.Handler),
@@ -201,9 +175,9 @@ func prepareHandler(method string, handler http.Handler) http.Handler {
 	return handler
 }
 
-func (r *Route) DebugPrintRoute() {
+func (route *Route) DebugPrintRoute() {
 	logger.InfoF("path: %s , isPathVar: %t , childVarName: %s", r.path, r.isPathVar, r.childVarName)
-	for k, v := range r.subRoutes {
+	for k, v := range route.subRoutes {
 		logger.InfoF("Printing Info of sub route %s", k)
 		v.DebugPrintRoute()
 	}
@@ -216,15 +190,15 @@ func (router *Router) DebugPrint() {
 	}
 }
 
-func (r *Route) addQueryVar(name string, required bool) *Route {
+func (route *Route) addQueryVar(name string, required bool) *Route {
 	//TODO add name validation.
 	queryParams := &QueryParam{
 		required: required,
 		name:     name,
 	}
 	//TODO Check if this name can be url encoded and save decoding per request,
-	r.queryParams[name] = queryParams
-	return r
+	route.queryParams[name] = queryParams
+	return route
 }
 
 // ServeHTTP :
@@ -285,6 +259,8 @@ func (router *Router) findRoute(req *http.Request) (*Route, context.Context) {
 	return route, ctx
 }
 
+// TODO rest of the DataTypes functions need to be exposed
+
 func (router *Router) GetPathParams(id string, r *http.Request) string {
 	val, ok := r.Context().Value(id).(string)
 	if !ok {
@@ -293,34 +269,8 @@ func (router *Router) GetPathParams(id string, r *http.Request) string {
 	return val
 }
 
-// TODO rest of the DataTypes functions need to be exposed
-
 func (router *Router) GetIntPathParams(id string, r *http.Request) int {
 	val, ok := r.Context().Value(id).(int)
-	if !ok {
-		logger.ErrorF("Error Fetching Path Param %s", id)
-	}
-	return val
-}
-
-func (router *Router) GetInt8PathParams(id string, r *http.Request) int8 {
-	val, ok := r.Context().Value(id).(int8)
-	if !ok {
-		logger.ErrorF("Error Fetching Path Param %s", id)
-	}
-	return val
-}
-
-func (router *Router) GetInt16PathParams(id string, r *http.Request) int16 {
-	val, ok := r.Context().Value(id).(int16)
-	if !ok {
-		logger.ErrorF("Error Fetching Path Param %s", id)
-	}
-	return val
-}
-
-func (router *Router) GetInt32PathParams(id string, r *http.Request) int32 {
-	val, ok := r.Context().Value(id).(int32)
 	if !ok {
 		logger.ErrorF("Error Fetching Path Param %s", id)
 	}
@@ -355,6 +305,35 @@ func (router *Router) GetBoolPathParams(id string, r *http.Request) bool {
 	val, ok := r.Context().Value(id).(bool)
 	if !ok {
 		logger.ErrorF("Error Fetching Path Param %s", id)
+	}
+	return val
+}
+
+func (router *Router) GetQueryParams(id string, r *http.Request) string {
+	val := r.URL.Query().Get(id)
+	return val
+}
+
+func (router *Router) GetIntQueryParams(id string, r *http.Request) int {
+	val, ok := strconv.Atoi(r.URL.Query().Get(id))
+	if ok!=nil {
+		logger.ErrorF("Error Fetching Query Parameter %s", id)
+	}
+	return val
+}
+
+func (router *Router) GetFloatQueryParams(id string, r *http.Request) float64 {
+	val, ok := strconv.ParseFloat(r.URL.Query().Get(id), 64)
+	if ok!=nil {
+		logger.ErrorF("Error Fetching Query Parameter %s", id)
+	}
+	return val
+}
+
+func (router *Router) GetBoolQueryParams(id string, r *http.Request) bool {
+	val, ok := strconv.ParseBool(r.URL.Query().Get(id))
+	if ok!=nil {
+		logger.ErrorF("Error Fetching Query Parameter %s", id)
 	}
 	return val
 }
