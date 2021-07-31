@@ -2,6 +2,7 @@ package turbo
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -47,15 +48,15 @@ func TestRouter_findRoute(t *testing.T) {
 		subRoutes:    make(map[string]*Route),
 		queryParams:  nil,
 	}
-	tlr["abc"]=route
+	tlr["abc"] = route
 	testUrl, _ := url.Parse("/abc")
 	a := args{req: &http.Request{
-		URL:              testUrl,
+		URL: testUrl,
 	}}
 	tests := []struct {
 		name   string
 		fields fields
-		args args
+		args   args
 		want   *Route
 		want1  context.Context
 	}{
@@ -66,11 +67,10 @@ func TestRouter_findRoute(t *testing.T) {
 				unsupportedMethodHandler: nil,
 				topLevelRoutes:           tlr,
 			},
-			args: a,
-			want: route,
+			args:  a,
+			want:  route,
 			want1: context.Background(),
 		},
-
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -98,9 +98,9 @@ func TestRouter_GetPathParams(t *testing.T) {
 		topLevelRoutes           map[string]*Route
 	}
 	type args struct {
-		id string
+		id  string
 		val string
-		r *http.Request
+		r   *http.Request
 	}
 	tests := []struct {
 		name   string
@@ -116,9 +116,9 @@ func TestRouter_GetPathParams(t *testing.T) {
 				topLevelRoutes:           nil,
 			},
 			args: args{
-				id: "key",
+				id:  "key",
 				val: "value",
-				r: req,
+				r:   req,
 			},
 			want: "value",
 		},
@@ -160,9 +160,9 @@ func TestRouter_GetIntPathParams(t *testing.T) {
 		topLevelRoutes           map[string]*Route
 	}
 	type args struct {
-		id string
+		id  string
 		val int
-		r *http.Request
+		r   *http.Request
 	}
 	tests := []struct {
 		name   string
@@ -178,9 +178,9 @@ func TestRouter_GetIntPathParams(t *testing.T) {
 				topLevelRoutes:           nil,
 			},
 			args: args{
-				id: "key",
+				id:  "key",
 				val: 2134,
-				r: req,
+				r:   req,
 			},
 			want: 2134,
 		},
@@ -222,9 +222,9 @@ func TestRouter_GetFloatPathParams(t *testing.T) {
 		topLevelRoutes           map[string]*Route
 	}
 	type args struct {
-		id string
+		id  string
 		val float64
-		r *http.Request
+		r   *http.Request
 	}
 	tests := []struct {
 		name   string
@@ -240,9 +240,9 @@ func TestRouter_GetFloatPathParams(t *testing.T) {
 				topLevelRoutes:           nil,
 			},
 			args: args{
-				id: "key",
+				id:  "key",
 				val: 21.34,
-				r: req,
+				r:   req,
 			},
 			want: 21.34,
 		},
@@ -284,9 +284,9 @@ func TestRouter_GetBoolPathParams(t *testing.T) {
 		topLevelRoutes           map[string]*Route
 	}
 	type args struct {
-		id string
+		id  string
 		val bool
-		r *http.Request
+		r   *http.Request
 	}
 	tests := []struct {
 		name   string
@@ -302,9 +302,9 @@ func TestRouter_GetBoolPathParams(t *testing.T) {
 				topLevelRoutes:           nil,
 			},
 			args: args{
-				id: "key",
+				id:  "key",
 				val: true,
-				r: req,
+				r:   req,
 			},
 			want: true,
 		},
@@ -348,7 +348,7 @@ func TestRouter_GetQueryParams(t *testing.T) {
 	}
 	type args struct {
 		id string
-		r *http.Request
+		r  *http.Request
 	}
 	tests := []struct {
 		name   string
@@ -365,7 +365,7 @@ func TestRouter_GetQueryParams(t *testing.T) {
 			},
 			args: args{
 				id: "test1",
-				r: &http.Request{URL: strUrl},
+				r:  &http.Request{URL: strUrl},
 			},
 			want: "value1",
 		},
@@ -378,7 +378,7 @@ func TestRouter_GetQueryParams(t *testing.T) {
 			},
 			args: args{
 				id: "test2",
-				r: &http.Request{URL: strUrl},
+				r:  &http.Request{URL: strUrl},
 			},
 			want: "value2",
 		},
@@ -391,7 +391,7 @@ func TestRouter_GetQueryParams(t *testing.T) {
 			},
 			args: args{
 				id: "test3",
-				r: &http.Request{URL: strUrl},
+				r:  &http.Request{URL: strUrl},
 			},
 			want: "",
 		},
@@ -424,7 +424,7 @@ func TestRouter_GetIntQueryParams(t *testing.T) {
 	}
 	type args struct {
 		id string
-		r *http.Request
+		r  *http.Request
 	}
 	tests := []struct {
 		name   string
@@ -441,7 +441,7 @@ func TestRouter_GetIntQueryParams(t *testing.T) {
 			},
 			args: args{
 				id: "test1",
-				r: &http.Request{URL: intUrl},
+				r:  &http.Request{URL: intUrl},
 			},
 			want: 1,
 		},
@@ -454,7 +454,7 @@ func TestRouter_GetIntQueryParams(t *testing.T) {
 			},
 			args: args{
 				id: "test2",
-				r: &http.Request{URL: intUrl},
+				r:  &http.Request{URL: intUrl},
 			},
 			want: 2,
 		},
@@ -467,7 +467,7 @@ func TestRouter_GetIntQueryParams(t *testing.T) {
 			},
 			args: args{
 				id: "test1",
-				r: &http.Request{URL: intUrlFail},
+				r:  &http.Request{URL: intUrlFail},
 			},
 			want: 0,
 		},
@@ -500,7 +500,7 @@ func TestRouter_GetFloatQueryParams(t *testing.T) {
 	}
 	type args struct {
 		id string
-		r *http.Request
+		r  *http.Request
 	}
 	tests := []struct {
 		name   string
@@ -517,7 +517,7 @@ func TestRouter_GetFloatQueryParams(t *testing.T) {
 			},
 			args: args{
 				id: "test1",
-				r: &http.Request{URL: floatUrl},
+				r:  &http.Request{URL: floatUrl},
 			},
 			want: 1.1,
 		},
@@ -530,7 +530,7 @@ func TestRouter_GetFloatQueryParams(t *testing.T) {
 			},
 			args: args{
 				id: "test2",
-				r: &http.Request{URL: floatUrl},
+				r:  &http.Request{URL: floatUrl},
 			},
 			want: 2.2332323,
 		},
@@ -543,7 +543,7 @@ func TestRouter_GetFloatQueryParams(t *testing.T) {
 			},
 			args: args{
 				id: "test1",
-				r: &http.Request{URL: floatUrlFail},
+				r:  &http.Request{URL: floatUrlFail},
 			},
 			want: 0,
 		},
@@ -576,7 +576,7 @@ func TestRouter_GetBoolQueryParams(t *testing.T) {
 	}
 	type args struct {
 		id string
-		r *http.Request
+		r  *http.Request
 	}
 	tests := []struct {
 		name   string
@@ -593,7 +593,7 @@ func TestRouter_GetBoolQueryParams(t *testing.T) {
 			},
 			args: args{
 				id: "test1",
-				r: &http.Request{URL: boolUrl},
+				r:  &http.Request{URL: boolUrl},
 			},
 			want: true,
 		},
@@ -606,7 +606,7 @@ func TestRouter_GetBoolQueryParams(t *testing.T) {
 			},
 			args: args{
 				id: "test2",
-				r: &http.Request{URL: boolUrl},
+				r:  &http.Request{URL: boolUrl},
 			},
 			want: false,
 		},
@@ -619,7 +619,7 @@ func TestRouter_GetBoolQueryParams(t *testing.T) {
 			},
 			args: args{
 				id: "test1",
-				r: &http.Request{URL: boolUrlFail},
+				r:  &http.Request{URL: boolUrlFail},
 			},
 			want: false,
 		},
@@ -636,6 +636,82 @@ func TestRouter_GetBoolQueryParams(t *testing.T) {
 			}
 			if got := router.GetBoolQueryParams(tt.args.id, tt.args.r); got != tt.want {
 				t.Errorf("GetBoolQueryParams() Value Got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRouter_Get(t *testing.T) {
+	type fields struct {
+		unManagedRouteHandler    http.Handler
+		unsupportedMethodHandler http.Handler
+		topLevelRoutes           map[string]*Route
+	}
+	type args struct {
+		path string
+		f    func(w http.ResponseWriter, r *http.Request)
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *Route
+	}{
+		{
+			name: "Test1",
+			fields: fields{
+				unManagedRouteHandler:    nil,
+				unsupportedMethodHandler: nil,
+				topLevelRoutes:           make(map[string]*Route),
+			},
+			args: args{
+				path: "/api/v1/health",
+				f: func(w http.ResponseWriter, r *http.Request) {
+					json.NewEncoder(w).Encode([]byte("hello from turbo"))
+				},
+			},
+			want: &Route{},
+		},
+		{
+			name: "Test2",
+			fields: fields{
+				unManagedRouteHandler:    nil,
+				unsupportedMethodHandler: nil,
+				topLevelRoutes:           make(map[string]*Route),
+			},
+			args: args{
+				path: "/api/v1/health/:id",
+				f: func(w http.ResponseWriter, r *http.Request) {
+					json.NewEncoder(w).Encode([]byte("hello from turbo"))
+				},
+			},
+			want: &Route{},
+		},
+		{
+			name: "Test3",
+			fields: fields{
+				unManagedRouteHandler:    nil,
+				unsupportedMethodHandler: nil,
+				topLevelRoutes:           make(map[string]*Route),
+			},
+			args: args{
+				path: "/",
+				f: func(w http.ResponseWriter, r *http.Request) {
+					json.NewEncoder(w).Encode([]byte("hello from turbo"))
+				},
+			},
+			want: &Route{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := &Router{
+				unManagedRouteHandler:    tt.fields.unManagedRouteHandler,
+				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
+				topLevelRoutes:           tt.fields.topLevelRoutes,
+			}
+			if got := router.Get(tt.args.path, tt.args.f); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+				t.Errorf("Get() = %v, want %v", got, tt.want)
 			}
 		})
 	}

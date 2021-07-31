@@ -92,6 +92,7 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 		}
 	}
 	logger.InfoF("Registering New Route: %s\n", path)
+	log.Printf("Registering New Route: %s\n", path)
 	//TODO add path check for any query variables specified.
 	pathValue := strings.TrimSpace(path)
 	pathValues := strings.Split(pathValue, PathSeparator)[1:]
@@ -289,7 +290,6 @@ func (router *Router) GetBoolPathParams(id string, r *http.Request) bool {
 
 func (router *Router) GetQueryParams(id string, r *http.Request) string {
 	val := r.URL.Query().Get(id)
-	log.Printf("val %v", val)
 	return val
 }
 
