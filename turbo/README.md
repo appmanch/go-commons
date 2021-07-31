@@ -61,9 +61,9 @@ func main() {
 
     2. Registering with Path Variables
        
-       _The path variables need to be registered with their type upfront_
+       _The path variables can be registered with **:<name_of_param>**_
         ```go
-        router.Get("/api/v1/getCustomer/:id:int32", getCustomer)
+        router.Get("/api/v1/getCustomer/:id", getCustomer)
         ```
 
 3. Path Params can be fetched with the built-in wrapper provided by the framework
@@ -76,7 +76,7 @@ func main() {
             ```go
             getIntPathParms(id string, r *http.Request) int {}
             ```
-        * To fetch Float64 parameters
+        * To fetch Float parameters
            ```go
            getFloatPathParms(id string, r *http.Request) float64 {}
            ```

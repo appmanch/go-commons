@@ -100,8 +100,6 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 		isPathVar := false
 		name := textutils.EmptyStr
 		for i, pathValue := range pathValues {
-			// TODO check for the datatype provided as input
-			// /api/v1/getCustomer/:id:int32
 			isPathVar = pathValue[0] == textutils.ColonChar
 			if isPathVar {
 				name = pathValue[1:]
@@ -257,8 +255,6 @@ func (router *Router) findRoute(req *http.Request) (*Route, context.Context) {
 	return route, ctx
 }
 
-// TODO rest of the DataTypes functions need to be exposed
-
 func (router *Router) GetPathParams(id string, r *http.Request) string {
 	val, ok := r.Context().Value(id).(string)
 	if !ok {
@@ -268,40 +264,24 @@ func (router *Router) GetPathParams(id string, r *http.Request) string {
 }
 
 func (router *Router) GetIntPathParams(id string, r *http.Request) int {
-	val, ok := r.Context().Value(id).(int)
-	if !ok {
+	val, ok := strconv.Atoi(r.Context().Value(id).(string))
+	if ok != nil {
 		logger.ErrorF("Error Fetching Path Param %s", id)
 	}
 	return val
 }
 
-func (router *Router) GetInt64PathParams(id string, r *http.Request) int64 {
-	val, ok := r.Context().Value(id).(int64)
-	if !ok {
-		logger.ErrorF("Error Fetching Path Param %s", id)
-	}
-	return val
-}
-
-func (router *Router) GetFloat32PathParams(id string, r *http.Request) float32 {
-	val, ok := r.Context().Value(id).(float32)
-	if !ok {
-		logger.ErrorF("Error Fetching Path Param %s", id)
-	}
-	return val
-}
-
-func (router *Router) GetFloat64PathParams(id string, r *http.Request) float64 {
-	val, ok := r.Context().Value(id).(float64)
-	if !ok {
+func (router *Router) GetFloatPathParams(id string, r *http.Request) float64 {
+	val, ok := strconv.ParseFloat(r.Context().Value(id).(string), 64)
+	if ok != nil {
 		logger.ErrorF("Error Fetching Path Param %s", id)
 	}
 	return val
 }
 
 func (router *Router) GetBoolPathParams(id string, r *http.Request) bool {
-	val, ok := r.Context().Value(id).(bool)
-	if !ok {
+	val, ok := strconv.ParseBool(r.Context().Value(id).(string))
+	if ok != nil {
 		logger.ErrorF("Error Fetching Path Param %s", id)
 	}
 	return val
@@ -314,7 +294,7 @@ func (router *Router) GetQueryParams(id string, r *http.Request) string {
 
 func (router *Router) GetIntQueryParams(id string, r *http.Request) int {
 	val, ok := strconv.Atoi(r.URL.Query().Get(id))
-	if ok!=nil {
+	if ok != nil {
 		logger.ErrorF("Error Fetching Query Parameter %s", id)
 	}
 	return val
@@ -322,7 +302,7 @@ func (router *Router) GetIntQueryParams(id string, r *http.Request) int {
 
 func (router *Router) GetFloatQueryParams(id string, r *http.Request) float64 {
 	val, ok := strconv.ParseFloat(r.URL.Query().Get(id), 64)
-	if ok!=nil {
+	if ok != nil {
 		logger.ErrorF("Error Fetching Query Parameter %s", id)
 	}
 	return val
@@ -330,7 +310,7 @@ func (router *Router) GetFloatQueryParams(id string, r *http.Request) float64 {
 
 func (router *Router) GetBoolQueryParams(id string, r *http.Request) bool {
 	val, ok := strconv.ParseBool(r.URL.Query().Get(id))
-	if ok!=nil {
+	if ok != nil {
 		logger.ErrorF("Error Fetching Query Parameter %s", id)
 	}
 	return val
