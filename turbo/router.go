@@ -264,24 +264,24 @@ func (router *Router) GetPathParams(id string, r *http.Request) string {
 }
 
 func (router *Router) GetIntPathParams(id string, r *http.Request) int {
-	val, ok := strconv.Atoi(r.Context().Value(id).(string))
-	if ok != nil {
+	val, ok := r.Context().Value(id).(int)
+	if !ok {
 		logger.ErrorF("Error Fetching Path Param %s", id)
 	}
 	return val
 }
 
 func (router *Router) GetFloatPathParams(id string, r *http.Request) float64 {
-	val, ok := strconv.ParseFloat(r.Context().Value(id).(string), 64)
-	if ok != nil {
+	val, ok := r.Context().Value(id).(float64)
+	if !ok {
 		logger.ErrorF("Error Fetching Path Param %s", id)
 	}
 	return val
 }
 
 func (router *Router) GetBoolPathParams(id string, r *http.Request) bool {
-	val, ok := strconv.ParseBool(r.Context().Value(id).(string))
-	if ok != nil {
+	val, ok := r.Context().Value(id).(bool)
+	if !ok {
 		logger.ErrorF("Error Fetching Path Param %s", id)
 	}
 	return val
@@ -289,6 +289,7 @@ func (router *Router) GetBoolPathParams(id string, r *http.Request) bool {
 
 func (router *Router) GetQueryParams(id string, r *http.Request) string {
 	val := r.URL.Query().Get(id)
+	log.Printf("val %v", val)
 	return val
 }
 
