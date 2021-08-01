@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"sync"
 	"testing"
 )
 
@@ -131,10 +132,10 @@ func TestRouter_GetPathParams(t *testing.T) {
 			},
 			args: args{
 				id:  "key2",
-				val: "123",
+				val: "73",
 				r:   req,
 			},
-			want: "123",
+			want: "73",
 		},
 	}
 	for _, tt := range tests {
@@ -193,10 +194,10 @@ func TestRouter_GetIntPathParams(t *testing.T) {
 			},
 			args: args{
 				id:  "key2",
-				val: 1231241,
+				val: 7337,
 				r:   req,
 			},
-			want: 1231241,
+			want: 7337,
 		},
 	}
 	for _, tt := range tests {
@@ -241,10 +242,10 @@ func TestRouter_GetFloatPathParams(t *testing.T) {
 			},
 			args: args{
 				id:  "key",
-				val: 21.34,
+				val: 73.37,
 				r:   req,
 			},
-			want: 21.34,
+			want: 73.37,
 		},
 		{
 			name: "Test2",
@@ -255,10 +256,10 @@ func TestRouter_GetFloatPathParams(t *testing.T) {
 			},
 			args: args{
 				id:  "key2",
-				val: 12.3124124123123,
+				val: 73.33333337,
 				r:   req,
 			},
-			want: 12.3124124123123,
+			want: 73.33333337,
 		},
 	}
 	for _, tt := range tests {
@@ -413,7 +414,7 @@ func TestRouter_GetQueryParams(t *testing.T) {
 	}
 }
 
-var intUrl, _ = url.Parse("https://foo.com?test1=1&test2=2")
+var intUrl, _ = url.Parse("https://foo.com?test1=73&test2=7337")
 var intUrlFail, _ = url.Parse("https://foo.com?test1=foo")
 
 func TestRouter_GetIntQueryParams(t *testing.T) {
@@ -443,7 +444,7 @@ func TestRouter_GetIntQueryParams(t *testing.T) {
 				id: "test1",
 				r:  &http.Request{URL: intUrl},
 			},
-			want: 1,
+			want: 73,
 		},
 		{
 			name: "Test2",
@@ -456,7 +457,7 @@ func TestRouter_GetIntQueryParams(t *testing.T) {
 				id: "test2",
 				r:  &http.Request{URL: intUrl},
 			},
-			want: 2,
+			want: 7337,
 		},
 		{ // Failure Test Case
 			name: "Test3",
@@ -489,7 +490,7 @@ func TestRouter_GetIntQueryParams(t *testing.T) {
 	}
 }
 
-var floatUrl, _ = url.Parse("https://foo.com?test1=1.1&test2=2.2332323")
+var floatUrl, _ = url.Parse("https://foo.com?test1=7.3&test2=73.37")
 var floatUrlFail, _ = url.Parse("https://foo.com?test1=hello")
 
 func TestRouter_GetFloatQueryParams(t *testing.T) {
@@ -519,7 +520,7 @@ func TestRouter_GetFloatQueryParams(t *testing.T) {
 				id: "test1",
 				r:  &http.Request{URL: floatUrl},
 			},
-			want: 1.1,
+			want: 7.3,
 		},
 		{
 			name: "Test2",
@@ -532,7 +533,7 @@ func TestRouter_GetFloatQueryParams(t *testing.T) {
 				id: "test2",
 				r:  &http.Request{URL: floatUrl},
 			},
-			want: 2.2332323,
+			want: 73.37,
 		},
 		{ // Failure Test Case
 			name: "Test3",
@@ -702,6 +703,21 @@ func TestRouter_Get(t *testing.T) {
 			},
 			want: &Route{},
 		},
+		{
+			name: "Test4",
+			fields: fields{
+				unManagedRouteHandler:    nil,
+				unsupportedMethodHandler: nil,
+				topLevelRoutes:           make(map[string]*Route),
+			},
+			args: args{
+				path: "/api/v1/getCustomer/:id/getData",
+				f: func(w http.ResponseWriter, r *http.Request) {
+					json.NewEncoder(w).Encode([]byte("hello from turbo"))
+				},
+			},
+			want: &Route{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -712,6 +728,69 @@ func TestRouter_Get(t *testing.T) {
 			}
 			if got := router.Get(tt.args.path, tt.args.f); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
 				t.Errorf("Get() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRouter_Add(t *testing.T) {
+	type fields struct {
+		lock                     sync.RWMutex
+		unManagedRouteHandler    http.Handler
+		unsupportedMethodHandler http.Handler
+		topLevelRoutes           map[string]*Route
+	}
+	type args struct {
+		path    string
+		f       func(w http.ResponseWriter, r *http.Request)
+		methods []string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *Route
+	}{
+		{
+			name: "Test1",
+			fields: fields{
+				unManagedRouteHandler:    nil,
+				unsupportedMethodHandler: nil,
+				topLevelRoutes:           make(map[string]*Route),
+			},
+			args: args{
+				path:    "/api/v1/foo",
+				f:       func(w http.ResponseWriter, r *http.Request) {
+					json.NewEncoder(w).Encode([]byte("fonzi says hello"))
+				},
+				methods: []string{"PUT", "POST"},
+			},
+		},
+		{
+			name: "Test2",
+			fields: fields{
+				unManagedRouteHandler:    nil,
+				unsupportedMethodHandler: nil,
+				topLevelRoutes:           make(map[string]*Route),
+			},
+			args: args{
+				path:    "/api/v1/fonzi",
+				f:       func(w http.ResponseWriter, r *http.Request) {
+					json.NewEncoder(w).Encode([]byte("don't delete fonzi"))
+				},
+				methods: []string{"DELETE"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := &Router{
+				unManagedRouteHandler:    tt.fields.unManagedRouteHandler,
+				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
+				topLevelRoutes:           tt.fields.topLevelRoutes,
+			}
+			if got := router.Add(tt.args.path, tt.args.f, tt.args.methods...); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+				t.Errorf("Add() = %v, want %v", got, tt.want)
 			}
 		})
 	}
