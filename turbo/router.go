@@ -107,7 +107,6 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 			} else {
 				name = pathValue
 			}
-			log.Println(name)
 			currentRoute := &Route{
 				path:         name,
 				isPathVar:    isPathVar,
