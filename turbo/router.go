@@ -3,7 +3,6 @@ package turbo
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -92,7 +91,6 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 		}
 	}
 	logger.InfoF("Registering New Route: %s\n", path)
-	log.Printf("Registering New Route: %s\n", path)
 	//TODO add path check for any query variables specified.
 	pathValue := strings.TrimSpace(path)
 	pathValues := strings.Split(pathValue, PathSeparator)[1:]
