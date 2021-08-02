@@ -249,6 +249,10 @@ func (router *Router) findRoute(req *http.Request) (*Route, context.Context) {
 				}
 			}
 			if route.isPathVar {
+				if val == "" {
+					logger.ErrorF("Route Registered with a Path Param : %s", route.path)
+					return nil, ctx
+				}
 				ctx = context.WithValue(ctx, route.path, val)
 			}
 		}
