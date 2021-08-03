@@ -50,10 +50,29 @@ func main() {
 
 1. Router lets you register routes based on the common HTTP Methods such as
     1. GET
+       ```go
+        router.Get("/api/v1/getCustomers", getCustomers) 
+        ```
     2. POST
+       ```go
+        router.Post("/api/v1/getCustomers", getCustomers) 
+        ```
     3. PUT
+       ```go
+        router.Put("/api/v1/getCustomers", getCustomers) 
+        ```
     4. DELETE
-2. Routes can be registered in the following ways
+        ```go
+        router.Delete("/api/v1/getCustomers", getCustomers) 
+        ```
+2. Router lets you register routes with multiple methods such as `("POST", "PUT")` for a single endpoint.
+   
+    With the help of `Add` function that can be achieved
+   ```go
+    router.Add("/api/v1/addCustomers", getCustomers, "PUT", "POST") 
+   ```
+   This will register a route called `/api/v1/addCustomers` with two functions attached to a single route, `PUT` and `POST`
+3. Routes can be registered in the following ways
     1. Registering Static Routes
         ```go
         router.Get("/api/v1/getCustomers", getCustomers) 

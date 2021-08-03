@@ -759,8 +759,8 @@ func TestRouter_Add(t *testing.T) {
 				topLevelRoutes:           make(map[string]*Route),
 			},
 			args: args{
-				path:    "/api/v1/foo",
-				f:       func(w http.ResponseWriter, r *http.Request) {
+				path: "/api/v1/foo",
+				f: func(w http.ResponseWriter, r *http.Request) {
 					json.NewEncoder(w).Encode([]byte("fonzi says hello"))
 				},
 				methods: []string{"PUT", "POST"},
@@ -774,8 +774,8 @@ func TestRouter_Add(t *testing.T) {
 				topLevelRoutes:           make(map[string]*Route),
 			},
 			args: args{
-				path:    "/api/v1/fonzi",
-				f:       func(w http.ResponseWriter, r *http.Request) {
+				path: "/api/v1/fonzi",
+				f: func(w http.ResponseWriter, r *http.Request) {
 					json.NewEncoder(w).Encode([]byte("don't delete fonzi"))
 				},
 				methods: []string{"DELETE"},
