@@ -341,7 +341,7 @@ const (
 	GraveAccentStr = "`"
 	// PipeStr = "|"
 	PipeStr = "|"
-	// EmptyStr
+	// EmptyStr = ""
 	EmptyStr      = ""
 	WhiteSpaceStr = " "
 )
