@@ -31,6 +31,8 @@ type Route struct {
 	isPathVar bool
 	//childVarName varName
 	childVarName string
+	//middlewares array to store the ...http.handler being registered for middleware in the router
+	middlewares []http.Handler
 	//handlers for HTTP Methods <method>|<Handler>
 	handlers map[string]http.Handler
 	//Sub Routes from this path
