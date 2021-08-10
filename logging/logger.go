@@ -66,7 +66,7 @@ var Levels = [...]string{
 	"TRACE",
 }
 
-//Levels of the logging by severity
+// LevelsBytes  of the logging by severity
 var LevelsBytes = [...][]byte{
 	[]byte("OFF"),
 	[]byte("ERROR"),
@@ -112,10 +112,6 @@ var whiteSpaceBytes = []byte(textutils.WhiteSpaceStr)
 
 func init() {
 	Configure(loadConfig())
-	//for i:=0;i<10000;i++{
-	//	lm:=logMsgPool.Get().(*LogMessage)
-	//	putLogMessage(lm)
-	//}
 }
 
 // Configure Logging
@@ -224,8 +220,8 @@ func GetLogger() *Logger {
 	defer mutex.Unlock()
 	pc, _, _, _ := runtime.Caller(1)
 	details := runtime.FuncForPC(pc)
-	fnNameSplit := strings.Split(details.Name(), "/") //TODO update the separator later
-	pkgFnName := strings.Split(fnNameSplit[len(fnNameSplit)-1], ".")
+	fnNameSplit := strings.Split(details.Name(), textutils.ForwardSlashStr)
+	pkgFnName := strings.Split(fnNameSplit[len(fnNameSplit)-1], textutils.PeriodStr)
 	pkgName := pkgFnName[0]
 
 	if _, ok := loggers[pkgName]; !ok {
@@ -336,7 +332,6 @@ func doAsyncLog() {
 
 //writeLog will write to the io.Writer interface
 func writeLog(w io.Writer, a ...interface{}) {
-
 	fmt.Fprintln(w, a...)
 }
 
