@@ -31,8 +31,10 @@ type Route struct {
 	isPathVar bool
 	//childVarName varName
 	childVarName string
+	//isAuthenticated keeps a check whether the route is authenticated or not
+	isAuthenticated bool
 	//middlewares array to store the ...http.handler being registered for middleware in the router
-	middlewares []http.Handler
+	middlewares []FilterFunc
 	//handlers for HTTP Methods <method>|<Handler>
 	handlers map[string]http.Handler
 	//Sub Routes from this path
@@ -92,7 +94,7 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 			panic(fmt.Sprintf("Invalid/Unsupported Http method  %s provided", method))
 		}
 	}
-	logger.InfoF("Registering New Route: %s\n", path)
+	logger.InfoF("Registering New Route: %s", path)
 	//TODO add path check for any query variables specified.
 	pathValue := strings.TrimSpace(path)
 	pathValues := strings.Split(pathValue, PathSeparator)[1:]
@@ -108,12 +110,13 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 				name = pathValue
 			}
 			currentRoute := &Route{
-				path:         name,
-				isPathVar:    isPathVar,
-				childVarName: textutils.EmptyStr,
-				handlers:     make(map[string]http.Handler),
-				subRoutes:    make(map[string]*Route),
-				queryParams:  make(map[string]*QueryParam),
+				path:            name,
+				isPathVar:       isPathVar,
+				childVarName:    textutils.EmptyStr,
+				isAuthenticated: false,
+				handlers:        make(map[string]http.Handler),
+				subRoutes:       make(map[string]*Route),
+				queryParams:     make(map[string]*QueryParam),
 			}
 			if route == nil {
 				if v, ok := router.topLevelRoutes[name]; ok {
@@ -219,6 +222,12 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	match, ctx := router.findRoute(r)
 	if match != nil {
 		handler = match.handlers[r.Method]
+		if len(match.middlewares) > 0 {
+			//Middlewares added
+			for i := range match.middlewares {
+				handler = match.middlewares[len(match.middlewares)-1-i](handler)
+			}
+		}
 	} else {
 		handler = router.unManagedRouteHandler
 	}
