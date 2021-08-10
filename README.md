@@ -1,22 +1,21 @@
 # go-commons
 
-Go Commons is a collection of reusable common utilities.
+Go Commons is a collection of reusable common utilities
 
 # Goals
 
 * Create reusable common collection of utilities targeting enterprise use cases
 * Ensure the project is self-contained and minimise external dependencies.
 
-## Utilities WIP
-*  [Logging](logging/LOGGING.md) 
+## Utilities
+*  [Configuration Support](config/README.md)
+*  [Logging](logging/README.md)
+*  [HTTP Routing](turbo/README.md)
 
+##  WIP
+*  [HTTP Routing Filters ](turbo/FILTERS.md)
+*  [Codec - Enterprise Codec Support](codec/README.md)
 
-## Current Set of utilities in pipeline
-
-* YAML codec support with validation
-* JSON Codec support with validation
-* Properties Support
-* Environment Var Support
 
 
 ## License
