@@ -3,41 +3,30 @@ package codec
 import (
 	"bytes"
 	"errors"
-	"go.appmanch.org/commons/textutils"
 	"io"
-	"reflect"
 	"strings"
+
+	"go.appmanch.org/commons/textutils"
 )
 
-//var knownTypes map[string][]FieldMeta=make(map[string][]FieldMeta)
-// Bool
-//	Int
-//	Int8
-//	Int16
-//	Int32
-//	Int64
-//	Uint
-//	Uint8
-//	Uint16
-//	Uint32
-//	Uint64
-//	Float32
-//	Float64
-//	Array
-//	Func
-//	Interface
-//	Map
-//	Slice
-//	String
-//	Struct
+type StructMeta struct {
+	Fields map[string]string
+}
 
+// FieldMeta struct captures the basic information for a field
 type FieldMeta struct {
-	Name        string
-	FieldName   string
-	Type        reflect.Type
-	Dimension   int
-	Required    bool
+	// Name of the field
+	Name string
+	//Dimension holds the field dimension
+	Dimension int
+	//Required flag indicating if the field is a requried field.
+	Required bool
+	// TargetNames stores map for known format types. This allows
 	TargetNames map[string]string
+	//TargetConfig stores configuration that is required by the target format . for Eg. Attribute config for XML etc.
+	TargetConfig map[string]string
+	//Sequence specifies the order  of the fields in the source/target format
+	Sequence int
 }
 
 type StringFieldMeta struct {
@@ -79,35 +68,35 @@ type IntFieldMeta struct {
 
 type UInt8FieldMeta struct {
 	FieldMeta
-	DefaultVal int8
+	DefaultVal uint8
 	Min        uint8
 	Max        uint8
 }
 
 type UInt16FieldMeta struct {
 	FieldMeta
-	DefaultVal int16
+	DefaultVal uint16
 	Min        uint16
 	Max        uint16
 }
 
 type UInt32FieldMeta struct {
 	FieldMeta
-	DefaultVal int16
+	DefaultVal uint32
 	Min        uint32
 	Max        uint32
 }
 
 type UIntFieldMeta struct {
 	FieldMeta
-	DefaultVal int
+	DefaultVal uint
 	Min        uint
 	Max        uint
 }
 
 type UInt64FieldMeta struct {
 	FieldMeta
-	DefaultVal int64
+	DefaultVal uint64
 	Min        uint64
 	Max        uint64
 }
@@ -125,7 +114,6 @@ type Float64FieldMeta struct {
 	Min        float64
 	Max        float64
 }
-
 type BooleanFieldMeta struct {
 	FieldMeta
 	DefaultVal bool
@@ -134,13 +122,13 @@ type BooleanFieldMeta struct {
 //StringEncoder interface
 type StringEncoder interface {
 	//EncodeToString will encode  a type to string
-	EncodeToString(v interface{}) string
+	EncodeToString(v interface{}) (string, error)
 }
 
 //BytesEncoder interface
 type BytesEncoder interface {
 	// EncodeToBytes will encode the provided type to []byte
-	EncodeToBytes(v interface{}) []byte
+	EncodeToBytes(v interface{}) ([]byte, error)
 }
 
 //StringDecoder interface
@@ -161,51 +149,45 @@ type Encoder interface {
 	BytesEncoder
 }
 
-//EncoderWriter Interface
-type EncoderWriter interface {
-	Encoder
-	//Write a type to writer
-	Write(v interface{}, w io.Writer) error
-}
-
 //Decoder Interface
 type Decoder interface {
 	StringDecoder
 	BytesDecoder
 }
 
-//DecoderReader interface
-type DecoderReader interface {
-	Decoder
+type ReaderWriter interface {
+	//Write a type to writer
+	Write(v interface{}, w io.Writer) error
 	//Read a type from a reader
 	Read(r io.Reader, v interface{}) error
 }
 
 // Codec Interface
 type Codec interface {
-	EncoderWriter
-	DecoderReader
+	Decoder
+	Encoder
+	ReaderWriter
+	Register(v interface{}) error
 }
 
-type baseCodec struct {
+type defaultCodec struct {
 }
 
-func Get() baseCodec {
-	return baseCodec{}
+func Get(v interface{}) Codec {
+	return defaultCodec{}
 }
 
-func (d baseCodec) DecodeString(s string, v interface{}) error {
-
+func (d defaultCodec) DecodeString(s string, v interface{}) error {
 	r := strings.NewReader(s)
 	return d.Read(r, v)
 }
 
-func (d baseCodec) DecodeBytes(b []byte, v interface{}) error {
+func (d defaultCodec) DecodeBytes(b []byte, v interface{}) error {
 	r := bytes.NewReader(b)
 	return d.Read(r, v)
 }
 
-func (d baseCodec) EncodeToBytes(v interface{}) ([]byte, error) {
+func (d defaultCodec) EncodeToBytes(v interface{}) ([]byte, error) {
 	buf := &bytes.Buffer{}
 	e := d.Write(v, buf)
 	if e == nil {
@@ -215,7 +197,7 @@ func (d baseCodec) EncodeToBytes(v interface{}) ([]byte, error) {
 	}
 }
 
-func (d baseCodec) EncodeToString(v interface{}) (string, error) {
+func (d defaultCodec) EncodeToString(v interface{}) (string, error) {
 	buf := &bytes.Buffer{}
 	e := d.Write(v, buf)
 	if e == nil {
@@ -225,11 +207,15 @@ func (d baseCodec) EncodeToString(v interface{}) (string, error) {
 	}
 }
 
-func (d baseCodec) Read(r io.Reader, v interface{}) error {
+func (d defaultCodec) Read(r io.Reader, v interface{}) error {
 
-	return errors.New("Reader is not implemented in base codec")
+	return errors.New("reader is not implemented in base codec")
 }
 
-func (d baseCodec) Write(v interface{}, w io.Writer) error {
-	return errors.New("Writer is not implemented in base codec")
+func (d defaultCodec) Write(v interface{}, w io.Writer) error {
+	return errors.New("writer is not implemented in base codec")
+}
+
+func (d defaultCodec) Register(v interface{}) error {
+	return errors.New("register is not implemented in base codec")
 }
