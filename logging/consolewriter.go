@@ -3,7 +3,6 @@ package logging
 import (
 	"bufio"
 	"io"
-	"io/ioutil"
 	"os"
 )
 
@@ -15,23 +14,19 @@ type ConsoleWriter struct {
 // InitConfig ConsoleWriter
 func (cw *ConsoleWriter) InitConfig(w *WriterConfig) {
 	if w.Console.WriteErrToStdOut {
-		cw.errorWriter = os.Stdout
+		cw.errorWriter = bufio.NewWriter(os.Stdout)
 	} else {
 		cw.errorWriter = bufio.NewWriter(os.Stderr)
 	}
 	if w.Console.WriteWarnToStdOut {
-		cw.warnWriter = os.Stdout
+		cw.warnWriter = bufio.NewWriter(os.Stdout)
 	} else {
 		cw.warnWriter = bufio.NewWriter(os.Stderr)
 	}
 
-	cw.infoWriter = os.Stdout
-	cw.debugWriter = os.Stdout
-	cw.traceWriter = os.Stdout
-
-	cw.infoWriter = ioutil.Discard
-	cw.debugWriter = ioutil.Discard
-	cw.traceWriter = ioutil.Discard
+	cw.infoWriter = bufio.NewWriter(os.Stdout)
+	cw.debugWriter = bufio.NewWriter(os.Stdout)
+	cw.traceWriter = bufio.NewWriter(os.Stdout)
 
 }
 
