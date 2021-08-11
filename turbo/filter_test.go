@@ -59,3 +59,56 @@ func TestFilter(t *testing.T) {
 		t.Error("Filter Chain not working")
 	}
 }
+
+func dummyAuthFilter(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if token := r.Header.Get("token"); token != "" {
+			logger.Info("Auth Token Present")
+			next.ServeHTTP(w, r)
+		} else {
+			logger.Info("FilterChain Broken, Unauthorised user access")
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte("Not Authorised"))
+		}
+	})
+}
+
+func TestAuthenticatorFilter(t *testing.T) {
+	var router = NewRouter()
+	route := router.Get("/api/foo", testHandler)
+	path := "/api/foo"
+
+	route.AddAuthenticator(dummyAuthFilter)
+
+	var w *httptest.ResponseRecorder
+	var r *http.Request
+	var err error
+
+	w = httptest.NewRecorder()
+	r, err = http.NewRequest(GET, path, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Header.Add("token", "value")
+
+	if route.authFilter == nil {
+		t.Error("Authenticator Filters not added")
+	}
+	router.ServeHTTP(w, r)
+	if w.Result().StatusCode != http.StatusOK {
+		t.Error("Auth Filter not working")
+	}
+
+	w = httptest.NewRecorder()
+	r, err = http.NewRequest(GET, path, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if route.authFilter == nil {
+		t.Error("Authenticator Filters not added")
+	}
+	router.ServeHTTP(w, r)
+	if w.Result().StatusCode != http.StatusForbidden {
+		t.Error("Auth Filter not working")
+	}
+}

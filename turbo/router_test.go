@@ -864,6 +864,24 @@ func TestRouter_ServeHTTP(t *testing.T) {
 		{
 			name: "Test5",
 			args: args{
+				path:   "api///fooTest//",
+				f:      dummyHandler,
+				method: GET,
+			},
+			want: http.StatusMovedPermanently,
+		},
+		{
+			name: "Test6",
+			args: args{
+				path:   "",
+				f:      dummyHandler,
+				method: GET,
+			},
+			want: http.StatusMovedPermanently,
+		},
+		{
+			name: "Test7",
+			args: args{
 				path:   "/api/foo",
 				f:      dummyHandler,
 				method: GET,
@@ -871,7 +889,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 			want: http.StatusOK,
 		},
 		{
-			name: "Test6",
+			name: "Test8",
 			args: args{
 				path:   "/api/putFoo/",
 				f:      dummyHandler,
@@ -880,7 +898,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 			want: http.StatusNotFound,
 		},
 		{
-			name: "Test6",
+			name: "Test9",
 			args: args{
 				path:   "/api/putBar/123",
 				f:      dummyHandler,

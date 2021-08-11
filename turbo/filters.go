@@ -26,8 +26,8 @@ Authenticator Filters
 more to be added
 */
 
-func (route *Route) AddAuthenticator(auth FilterFunc) *Route {
-	route.isAuthenticated = auth
+func (route *Route) AddAuthenticator(filter FilterFunc) *Route {
+	route.authFilter = filter
 	return route
 }
 
