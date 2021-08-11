@@ -11,8 +11,6 @@ import (
 	"testing"
 )
 
-var router = NewRouter()
-
 func TestNewRouter(t *testing.T) {
 	tests := []struct {
 		name string
@@ -809,6 +807,7 @@ func dummyFilter(next http.Handler) http.Handler {
 }
 
 func TestRouter_ServeHTTP(t *testing.T) {
+	var router = NewRouter()
 	router.Get("/api/fooTest", dummyHandler)
 	router.Delete("/api/deleteFoo", dummyHandler)
 	router.Put("/api/putFoo/:id", dummyHandler)

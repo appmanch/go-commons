@@ -24,7 +24,7 @@ func (route *Route) AddFilter(filter ...FilterFunc) *Route {
 Authenticator Filters
 1. Basic Auth
 more to be added
- */
+*/
 
 func (route *Route) AddAuthenticator(auth FilterFunc) *Route {
 	route.isAuthenticated = auth
