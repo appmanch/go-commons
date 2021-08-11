@@ -8,8 +8,13 @@ with all the necessary Use Cases and at the same time scales well.
 - [Installation](#installation)
 - [Benchmarking Results](#benchmarking-results)
 - [Quick Start Guide](#quick-start-guide)
-- [Functionalities Exposed](#functionalities-exposed)
-
+- [Features](#features)
+    - [Base Routing](#base-routing)
+    - [Multiple HTTP Methods Registering](#multiple-http-methods-registering)
+    - [Routes Registering](#routes-registering)
+    - [Path Params Wrapper](#path-params-wrapper)
+    - [Query Params Wrapper](#query-params-wrapper)
+    - [Filters](#filters)
 ---
 
 ### Installation
@@ -48,9 +53,10 @@ log.Fatalln(err)
 }
 ```
 
-### Functionalities Exposed
+### Features
 
-1. Router lets you register routes based on the common HTTP Methods such as
+#### Base Routing
+- Router lets you register routes based on the common HTTP Methods such as
     1. GET
        ```go
         router.Get("/api/v1/getCustomers", getCustomers) 
@@ -67,8 +73,9 @@ log.Fatalln(err)
         ```go
         router.Delete("/api/v1/getCustomers", getCustomers) 
         ```
-       
-2. Router lets you register routes with multiple methods such as `("POST", "PUT")` for a single endpoint.
+
+#### Multiple HTTP Methods Registering
+- Router lets you register routes with multiple methods such as `("POST", "PUT")` for a single endpoint.
 
    With the help of `Add` function that can be achieved
    ```go
@@ -76,21 +83,23 @@ log.Fatalln(err)
    ```
    This will register a route called `/api/v1/addCustomers` with two functions attached to a single route, `PUT`
    and `POST`
-   
-3. Routes can be registered in the following ways
-    1. Registering Static Routes
+
+#### Routes Registering
+- Routes can be registered in the following ways
+    * Registering Static Routes
         ```go
         router.Get("/api/v1/getCustomers", getCustomers) 
         ```
 
-    2. Registering with Path Variables
+    * Registering with Path Variables
 
        _The path variables can be registered with **:<name_of_param>**_
         ```go
         router.Get("/api/v1/getCustomer/:id", getCustomer)
         ```
 
-4. Path Params can be fetched with the built-in wrapper provided by the framework
+#### Path Params Wrapper
+- Path Params can be fetched with the built-in wrapper provided by the framework
     * The framework exposes a number of functions based on the type of variable that has been registered with the route
         * To fetch string parameters
             ```go
@@ -109,7 +118,8 @@ log.Fatalln(err)
            getBoolPathParms(id string, r *http.Request) bool {}
            ```
 
-5. Query Parameters can also be fetched with a built-in wrapper functions provided by the framework
+#### Query Params Wrapper
+- Query Parameters can also be fetched with a built-in wrapper functions provided by the framework
     * The Framework exposes a number of wrapper functions which lets you fetch the query params of specific data type
       required
         * To fetch string query params
@@ -128,8 +138,9 @@ log.Fatalln(err)
            ```go
            GetBoolQueryParams(id string, r *http.Request) bool {}
            ```
-    
-6. Filter Chain is available to add your custom middlewares to the `route`.
+          
+#### Filters     
+- Filters are available to add your custom middlewares to the `route`.
 
    Keeping in mind that all these middlewares/filters can be added at the route level only, this way giving you more
    freedom on how each route should behave in a microservice.
