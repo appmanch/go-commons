@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"sync"
@@ -794,4 +795,113 @@ func TestRouter_Add(t *testing.T) {
 			}
 		})
 	}
+}
+
+func dummyHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Test Passes"))
+}
+
+func dummyFilter(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger.Info("dummy Filter Added")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func TestRouter_ServeHTTP(t *testing.T) {
+	router.Get("/api/fooTest", dummyHandler)
+	router.Delete("/api/deleteFoo", dummyHandler)
+	router.Put("/api/putFoo/:id", dummyHandler)
+	router.Post("/api/putBar/:id", dummyHandler)
+	router.Get("/api/foo", dummyHandler).AddFilter(dummyFilter)
+
+	type args struct {
+		path   string
+		f      func(w http.ResponseWriter, r *http.Request)
+		method string
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			name: "Test1",
+			args: args{
+				path:   "/api/fooTest",
+				f:      dummyHandler,
+				method: GET,
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "Test2",
+			args: args{
+				path:   "/api/fooTest",
+				f:      dummyHandler,
+				method: PUT,
+			},
+			want: http.StatusMethodNotAllowed,
+		},
+		{
+			name: "Test3",
+			args: args{
+				path:   "/api/fooTest/bar",
+				f:      dummyHandler,
+				method: PUT,
+			},
+			want: http.StatusNotFound,
+		},
+		{
+			name: "Test4",
+			args: args{
+				path:   "///api///fooTest//",
+				f:      dummyHandler,
+				method: GET,
+			},
+			want: http.StatusMovedPermanently,
+		},
+		{
+			name: "Test5",
+			args: args{
+				path:   "/api/foo",
+				f:      dummyHandler,
+				method: GET,
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "Test6",
+			args: args{
+				path:   "/api/putFoo/",
+				f:      dummyHandler,
+				method: PUT,
+			},
+			want: http.StatusNotFound,
+		},
+		{
+			name: "Test6",
+			args: args{
+				path:   "/api/putBar/123",
+				f:      dummyHandler,
+				method: POST,
+			},
+			want: http.StatusOK,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			r, err := http.NewRequest(tt.args.method, tt.args.path, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			router.ServeHTTP(w, r)
+			if w.Result().StatusCode != tt.want {
+				t.Errorf("ServeHttp() got = %v, want = %v", w.Result().StatusCode, tt.want)
+			}
+		})
+	}
+
 }

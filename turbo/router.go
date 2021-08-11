@@ -32,7 +32,7 @@ type Route struct {
 	//childVarName varName
 	childVarName string
 	//isAuthenticated keeps a check whether the route is authenticated or not
-	isAuthenticated bool
+	isAuthenticated FilterFunc
 	//middlewares array to store the ...http.handler being registered for middleware in the router
 	middlewares []FilterFunc
 	//handlers for HTTP Methods <method>|<Handler>
@@ -113,7 +113,7 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 				path:            name,
 				isPathVar:       isPathVar,
 				childVarName:    textutils.EmptyStr,
-				isAuthenticated: false,
+				isAuthenticated: nil,
 				handlers:        make(map[string]http.Handler),
 				subRoutes:       make(map[string]*Route),
 				queryParams:     make(map[string]*QueryParam),
@@ -227,6 +227,11 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			for i := range match.middlewares {
 				handler = match.middlewares[len(match.middlewares)-1-i](handler)
 			}
+		}
+		// check for authenticated filter explicitly at the top
+		// we add all the filters added by the user in it's order and if the user has added a Authenticator Filter then it will always be executed first
+		if match.isAuthenticated != nil {
+			handler = match.isAuthenticated(handler)
 		}
 	} else {
 		handler = router.unManagedRouteHandler
