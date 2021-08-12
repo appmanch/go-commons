@@ -7,7 +7,7 @@ import (
 	"go.appmanch.org/commons/turbo/auth"
 )
 
-//FilterFunc :
+//FilterFunc : FuncHandler for with which the Filters need to be defined
 type FilterFunc func(http.Handler) http.Handler
 
 // AddFilter : Making the Filter Chain in the order of filters being added
@@ -21,15 +21,13 @@ func (route *Route) AddFilter(filter ...FilterFunc) *Route {
 	return route
 }
 
-//middle handler function to be defined by the dev explicitly
-//r.AddAuthenticator() //pass the middleware handler
-//r.SetLogger() //pass the logger reference
-
+//AddAuthenticator : Adding the authenticator filter to the route
 func (route *Route) AddAuthenticator(auth auth.Authenticator) *Route {
 	route.authFilter = auth
 	return route
 }
 
+//SetLogger : Sets the custom logger is required at the route level
 func (route *Route) SetLogger(logger *logging.Logger) *Route {
 	route.logger = logger
 	return route

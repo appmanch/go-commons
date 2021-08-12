@@ -44,7 +44,7 @@ type Route struct {
 	subRoutes map[string]*Route
 	//Query Parameters that may be used.
 	queryParams map[string]*QueryParam
-
+	//logger to set the external logger if required using SetLogger()
 	logger *logging.Logger
 }
 
@@ -226,7 +226,6 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-
 	// start by checking where the method of the Request is same as that of the registered method
 	match, paramsMap := router.findRoute(r)
 	if match != nil {
@@ -279,7 +278,6 @@ func (router *Router) findRoute(req *http.Request) (*Route, map[string]string) {
 					logger.ErrorF("Route Registered with a Path Param : %s", route.path)
 					return nil, nil
 				}
-				//ctx = context.WithValue(ctx, route.path, val)
 				paramsMap[route.path] = val
 			}
 		}
@@ -289,7 +287,6 @@ func (router *Router) findRoute(req *http.Request) (*Route, map[string]string) {
 
 func (router *Router) GetPathParams(id string, r *http.Request) (string, error) {
 	val, ok := r.Context().Value("params").(map[string]string)
-	logger.Info(ok)
 	if !ok {
 		logger.ErrorF("Error Fetching Path Param %s", id)
 		return "err", errors.New(fmt.Sprintf("error fetching path param %s", id))
