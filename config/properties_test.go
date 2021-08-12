@@ -50,7 +50,7 @@ func TestProperties_Get(t *testing.T) {
 				RWMutex:       tt.fields.RWMutex,
 			}
 			if got := p.Get(tt.args.k, tt.args.d); got != tt.want {
-				t.Errorf("Get() = %v, want %v", got, tt.want)
+				t.Errorf("Apply() = %v, want %v", got, tt.want)
 			}
 		})
 	}

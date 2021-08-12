@@ -2,13 +2,16 @@ package turbo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync"
 
+	"go.appmanch.org/commons/logging"
 	"go.appmanch.org/commons/textutils"
+	"go.appmanch.org/commons/turbo/auth"
 )
 
 // Router router struct that holds the router configuration
@@ -32,15 +35,17 @@ type Route struct {
 	//childVarName varName
 	childVarName string
 	//isAuthenticated keeps a check whether the route is authenticated or not
-	authFilter FilterFunc
-	//middlewares array to store the ...http.handler being registered for middleware in the router
-	middlewares []FilterFunc
+	authFilter auth.Authenticator
+	//filters array to store the ...http.handler being registered for middleware in the router
+	filters []FilterFunc
 	//handlers for HTTP Methods <method>|<Handler>
 	handlers map[string]http.Handler
 	//Sub Routes from this path
 	subRoutes map[string]*Route
 	//Query Parameters that may be used.
 	queryParams map[string]*QueryParam
+
+	logger *logging.Logger
 }
 
 //QueryParam for the Route configuration
@@ -114,6 +119,7 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 				isPathVar:    isPathVar,
 				childVarName: textutils.EmptyStr,
 				authFilter:   nil,
+				logger:       logger,
 				handlers:     make(map[string]http.Handler),
 				subRoutes:    make(map[string]*Route),
 				queryParams:  make(map[string]*QueryParam),
@@ -159,6 +165,8 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 			handlers:     make(map[string]http.Handler),
 			subRoutes:    make(map[string]*Route),
 			queryParams:  make(map[string]*QueryParam),
+			authFilter:   nil,
+			logger:       logger,
 		}
 		for _, method := range methods {
 			currentRoute.handlers[method] = prepareHandler(method, http.HandlerFunc(f))
@@ -218,20 +226,21 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
 	// start by checking where the method of the Request is same as that of the registered method
-	match, ctx := router.findRoute(r)
+	match, paramsMap := router.findRoute(r)
 	if match != nil {
 		handler = match.handlers[r.Method]
-		if len(match.middlewares) > 0 {
+		if len(match.filters) > 0 {
 			//Middlewares added
-			for i := range match.middlewares {
-				handler = match.middlewares[len(match.middlewares)-1-i](handler)
+			for i := range match.filters {
+				handler = match.filters[len(match.filters)-1-i](handler)
 			}
 		}
 		// check for authenticated filter explicitly at the top
 		// we add all the filters added by the user in it's order and if the user has added a Authenticator Filter then it will always be executed first
 		if match.authFilter != nil {
-			handler = match.authFilter(handler)
+			handler = match.authFilter.Apply(handler)
 		}
 	} else {
 		handler = router.unManagedRouteHandler
@@ -239,14 +248,17 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if handler == nil {
 		handler = router.unsupportedMethodHandler
 	}
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	if len(paramsMap) >0 {
+		r = r.WithContext(context.WithValue(r.Context(), "params", paramsMap))
+	}
+	handler.ServeHTTP(w, r)
 }
 
 // findRoute : the function checks for the incoming request path whether it matches with the registered route's path or not
-func (router *Router) findRoute(req *http.Request) (*Route, context.Context) {
+func (router *Router) findRoute(req *http.Request) (*Route, map[string]string) {
 	inReq := strings.Split(req.URL.Path, PathSeparator)[1:]
 	var route *Route
-	ctx := req.Context()
+	var paramsMap map[string]string = nil
 	for _, val := range inReq {
 		if route == nil {
 			route = router.topLevelRoutes[val]
@@ -258,78 +270,95 @@ func (router *Router) findRoute(req *http.Request) (*Route, context.Context) {
 				if r, ok := route.subRoutes[val]; ok {
 					route = r
 				} else {
-					return nil, ctx
+					return nil, nil
 				}
 			}
 			if route.isPathVar {
+				paramsMap = make(map[string]string)
 				if val == "" {
 					logger.ErrorF("Route Registered with a Path Param : %s", route.path)
-					return nil, ctx
+					return nil, nil
 				}
-				ctx = context.WithValue(ctx, route.path, val)
+				//ctx = context.WithValue(ctx, route.path, val)
+				paramsMap[route.path] = val
 			}
 		}
 	}
-	return route, ctx
+	return route, paramsMap
 }
 
-func (router *Router) GetPathParams(id string, r *http.Request) string {
-	val, ok := r.Context().Value(id).(string)
+func (router *Router) GetPathParams(id string, r *http.Request) (string, error) {
+	val, ok := r.Context().Value("params").(map[string]string)
+	logger.Info(ok)
 	if !ok {
 		logger.ErrorF("Error Fetching Path Param %s", id)
+		return "err", errors.New(fmt.Sprintf("error fetching path param %s", id))
 	}
-	return val
+	return val[id], nil
 }
 
-func (router *Router) GetIntPathParams(id string, r *http.Request) int {
-	val, ok := r.Context().Value(id).(int)
+func (router *Router) GetIntPathParams(id string, r *http.Request) (int, error) {
+	val, ok := r.Context().Value("params").(map[string]string)
 	if !ok {
 		logger.ErrorF("Error Fetching Path Param %s", id)
+		return -1, errors.New(fmt.Sprintf("error fetching path param %s", id))
 	}
-	return val
+	valInt, err := strconv.Atoi(val[id])
+	return valInt, err
 }
 
-func (router *Router) GetFloatPathParams(id string, r *http.Request) float64 {
-	val, ok := r.Context().Value(id).(float64)
+func (router *Router) GetFloatPathParams(id string, r *http.Request) (float64, error) {
+	val, ok := r.Context().Value("params").(map[string]string)
 	if !ok {
 		logger.ErrorF("Error Fetching Path Param %s", id)
+		return -1, errors.New(fmt.Sprintf("error fetching path param %s", id))
 	}
-	return val
+	valFloat, err := strconv.ParseFloat(val[id], 64)
+	return valFloat, err
 }
 
-func (router *Router) GetBoolPathParams(id string, r *http.Request) bool {
-	val, ok := r.Context().Value(id).(bool)
+func (router *Router) GetBoolPathParams(id string, r *http.Request) (bool, error) {
+	val, ok := r.Context().Value("params").(map[string]string)
 	if !ok {
 		logger.ErrorF("Error Fetching Path Param %s", id)
+		return false, errors.New(fmt.Sprintf("error fetching path param %s", id))
 	}
-	return val
+	valBool, err := strconv.ParseBool(val[id])
+	return valBool, err
 }
 
-func (router *Router) GetQueryParams(id string, r *http.Request) string {
+func (router *Router) GetQueryParams(id string, r *http.Request) (string, error) {
 	val := r.URL.Query().Get(id)
-	return val
+	if val == "" {
+		logger.ErrorF("Error Fetching Query Param %s", id)
+		return "err", errors.New(fmt.Sprintf("error fetching query param %s", id))
+	}
+	return val, nil
 }
 
-func (router *Router) GetIntQueryParams(id string, r *http.Request) int {
+func (router *Router) GetIntQueryParams(id string, r *http.Request) (int, error) {
 	val, ok := strconv.Atoi(r.URL.Query().Get(id))
 	if ok != nil {
 		logger.ErrorF("Error Fetching Query Parameter %s", id)
+		return -1, errors.New(fmt.Sprintf("error fetching query param %s", id))
 	}
-	return val
+	return val, nil
 }
 
-func (router *Router) GetFloatQueryParams(id string, r *http.Request) float64 {
+func (router *Router) GetFloatQueryParams(id string, r *http.Request) (float64, error) {
 	val, ok := strconv.ParseFloat(r.URL.Query().Get(id), 64)
 	if ok != nil {
 		logger.ErrorF("Error Fetching Query Parameter %s", id)
+		return -1, errors.New(fmt.Sprintf("error fetching query param %s", id))
 	}
-	return val
+	return val, nil
 }
 
-func (router *Router) GetBoolQueryParams(id string, r *http.Request) bool {
+func (router *Router) GetBoolQueryParams(id string, r *http.Request) (bool, error) {
 	val, ok := strconv.ParseBool(r.URL.Query().Get(id))
 	if ok != nil {
 		logger.ErrorF("Error Fetching Query Parameter %s", id)
+		return false, errors.New(fmt.Sprintf("error fetching query param %s", id))
 	}
-	return val
+	return val, nil
 }

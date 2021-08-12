@@ -1,6 +1,11 @@
 package turbo
 
-import "net/http"
+import (
+	"net/http"
+
+	"go.appmanch.org/commons/logging"
+	"go.appmanch.org/commons/turbo/auth"
+)
 
 //FilterFunc :
 type FilterFunc func(http.Handler) http.Handler
@@ -9,10 +14,10 @@ type FilterFunc func(http.Handler) http.Handler
 // if f1, f2, f3, finalHandler handlers are added to the filter chain then the order of execution remains
 // f1 -> f2 -> f3 -> finalHandler
 func (route *Route) AddFilter(filter ...FilterFunc) *Route {
-	newMiddlewares := make([]FilterFunc, 0, len(route.middlewares)+len(filter))
-	newMiddlewares = append(newMiddlewares, route.middlewares...)
-	newMiddlewares = append(newMiddlewares, filter...)
-	route.middlewares = newMiddlewares
+	newFilters := make([]FilterFunc, 0, len(route.filters)+len(filter))
+	newFilters = append(newFilters, route.filters...)
+	newFilters = append(newFilters, filter...)
+	route.filters = newFilters
 	return route
 }
 
@@ -20,17 +25,12 @@ func (route *Route) AddFilter(filter ...FilterFunc) *Route {
 //r.AddAuthenticator() //pass the middleware handler
 //r.SetLogger() //pass the logger reference
 
-/*
-Authenticator Filters
-1. Basic Auth
-more to be added
-*/
-
-func (route *Route) AddAuthenticator(filter FilterFunc) *Route {
-	route.authFilter = filter
+func (route *Route) AddAuthenticator(auth auth.Authenticator) *Route {
+	route.authFilter = auth
 	return route
 }
 
-func (route *Route) SetLogger() {
-
+func (route *Route) SetLogger(logger *logging.Logger) *Route {
+	route.logger = logger
+	return route
 }

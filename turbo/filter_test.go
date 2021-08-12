@@ -51,7 +51,7 @@ func TestFilter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(route.middlewares) != len(tests) {
+	if len(route.filters) != len(tests) {
 		t.Error("All Test Filters not added")
 	}
 	router.ServeHTTP(w, r)
@@ -60,17 +60,21 @@ func TestFilter(t *testing.T) {
 	}
 }
 
-func dummyAuthFilter(next http.Handler) http.Handler {
+type BasicAuthFilter struct{}
+
+func (ba *BasicAuthFilter) Apply(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if token := r.Header.Get("token"); token != "" {
-			logger.Info("Auth Token Present")
 			next.ServeHTTP(w, r)
 		} else {
-			logger.Info("FilterChain Broken, Unauthorised user access")
 			w.WriteHeader(http.StatusForbidden)
 			w.Write([]byte("Not Authorised"))
 		}
 	})
+}
+
+func CreateBasicAuthAuthenticator() *BasicAuthFilter {
+	return &BasicAuthFilter{}
 }
 
 func TestAuthenticatorFilter(t *testing.T) {
@@ -78,7 +82,9 @@ func TestAuthenticatorFilter(t *testing.T) {
 	route := router.Get("/api/foo", testHandler)
 	path := "/api/foo"
 
-	route.AddAuthenticator(dummyAuthFilter)
+	var authenticator = CreateBasicAuthAuthenticator()
+
+	route.AddAuthenticator(authenticator)
 
 	var w *httptest.ResponseRecorder
 	var r *http.Request
