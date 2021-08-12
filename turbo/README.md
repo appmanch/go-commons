@@ -37,20 +37,20 @@ good to go.
 
 ```go
 func main() {
-router := turbo.New()
-router.Get("/api/v1/healthCheck", healthCheck) // healthCheck is the handler Function
-router.Get("/api/v1/getData", getData) // getData is the handler Function
+    router := turbo.New()
+    router.Get("/api/v1/healthCheck", healthCheck) // healthCheck is the handler Function
+    router.Get("/api/v1/getData", getData) // getData is the handler Function
 
-srv := &http.Server{
-Handler:        router,
-Addr:           ":8080",
-ReadTimeout:    20 * time.Second,
-WriteTimeout:   20 * time.Second,
-}
+    srv := &http.Server{
+        Handler:        router,
+        Addr:           ":8080",
+        ReadTimeout:    20 * time.Second,
+        WriteTimeout:   20 * time.Second,
+    }
 
-if err := srv.ListenAndServe(); err != nil {
-log.Fatalln(err)
-}
+    if err := srv.ListenAndServe(); err != nil {
+        log.Fatalln(err)
+    }
 }
 ```
 

@@ -247,7 +247,7 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if handler == nil {
 		handler = router.unsupportedMethodHandler
 	}
-	if len(paramsMap) >0 {
+	if len(paramsMap) > 0 {
 		r = r.WithContext(context.WithValue(r.Context(), "params", paramsMap))
 	}
 	handler.ServeHTTP(w, r)

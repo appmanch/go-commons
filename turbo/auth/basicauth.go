@@ -1,7 +1,6 @@
 package auth
 
 type BasicAuthFilter struct {
-
 }
 
 /*func (ba *BasicAuthFilter) Apply(next http.Handler) http.Handler {
