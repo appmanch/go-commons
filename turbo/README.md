@@ -15,6 +15,7 @@ with all the necessary Use Cases and at the same time scales well.
     - [Path Params Wrapper](#path-params-wrapper)
     - [Query Params Wrapper](#query-params-wrapper)
     - [Filters](#filters)
+
 ---
 
 ### Installation
@@ -56,6 +57,7 @@ log.Fatalln(err)
 ### Features
 
 #### Base Routing
+
 - Router lets you register routes based on the common HTTP Methods such as
     1. GET
        ```go
@@ -75,16 +77,18 @@ log.Fatalln(err)
         ```
 
 #### Multiple HTTP Methods Registering
+
 - Router lets you register routes with multiple methods such as `("POST", "PUT")` for a single endpoint.
 
-   With the help of `Add` function that can be achieved
+  With the help of `Add` function that can be achieved
    ```go
     router.Add("/api/v1/addCustomers", getCustomers, "PUT", "POST") 
    ```
-   This will register a route called `/api/v1/addCustomers` with two functions attached to a single route, `PUT`
-   and `POST`
+  This will register a route called `/api/v1/addCustomers` with two functions attached to a single route, `PUT`
+  and `POST`
 
 #### Routes Registering
+
 - Routes can be registered in the following ways
     * Registering Static Routes
         ```go
@@ -93,12 +97,13 @@ log.Fatalln(err)
 
     * Registering with Path Variables
 
-       _The path variables can be registered with **:<name_of_param>**_
+      _The path variables can be registered with **:<name_of_param>**_
         ```go
         router.Get("/api/v1/getCustomer/:id", getCustomer)
         ```
 
 #### Path Params Wrapper
+
 - Path Params can be fetched with the built-in wrapper provided by the framework
     * The framework exposes a number of functions based on the type of variable that has been registered with the route
         * To fetch string parameters
@@ -119,6 +124,7 @@ log.Fatalln(err)
            ```
 
 #### Query Params Wrapper
+
 - Query Parameters can also be fetched with a built-in wrapper functions provided by the framework
     * The Framework exposes a number of wrapper functions which lets you fetch the query params of specific data type
       required
@@ -138,14 +144,15 @@ log.Fatalln(err)
            ```go
            GetBoolQueryParams(id string, r *http.Request) bool {}
            ```
-          
-#### Filters     
+
+#### Filters
+
 - Filters are available to add your custom middlewares to the `route`.
 
-   Keeping in mind that all these middlewares/filters can be added at the route level only, this way giving you more
-   freedom on how each route should behave in a microservice.
+  Keeping in mind that all these middlewares/filters can be added at the route level only, this way giving you more
+  freedom on how each route should behave in a microservice.
 
-   `turbo` provides two main Filter Functions which can be leveraged easily and make your microservice more flexible
+  `turbo` provides two main Filter Functions which can be leveraged easily and make your microservice more flexible
    ```go
    1. AddFilter(filters ...FilterFunc)
    2. AddAuthenticator(filter FilterFunc)
@@ -184,43 +191,45 @@ log.Fatalln(err)
       ```
     * `AddAuthenticator()`
 
-      A Basic Authentication Filter can be implemented like below
+      turbo is working on supporting all the major `Authentication` schemes in accordance with the OAS3 Specifications;
+
+       | Authorization  | Status |
+       | :---           | :----: |
+       | Basic Auth     | WIP    |
+       | JWT            | TBD    |
+       | OAuth          | TBD    |
+       | LDAP           | TBD    |
+
+      An Authentication Filter can be implemented like below
+
       ```go
       func main() {
         turboRouter := turbo.NewRouter()
-        turboRouter.Get("/api/v1", ResponseHandler).AddAuthenticator(authFilter)
+        var authenticator = auth.CreateBasicAuthAuthenticator()
+        // provide the configuration to your authenticator filter struct, 
+        // with the relevant struct Objects that would be exposed 
+        // Once those input to your `authenticator` is fed, it can be used as the Filter easily
+        turboRouter.Get("/api/v1", ResponseHandler).AddAuthenticator(authenticator)
         
         srv := &http.Server{
             Handler: turboRouter,
             Addr:    ":9292",
         }
       }
-      
-      func authFilter(next http.Handler) http.Handler {
-        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-          if token := r.Header.Get("token"); token != "" {
-            logger.Info("Auth Token Present")
-            next.ServeHTTP(w, r)
-          } else {
-          	logger.Info("FilterChain Broken, Unauthorised user access")
-          	w.WriteHeader(http.StatusForbidden)
-          	w.Write([]byte("Not Authorised"))
-          }
-        }
-      }
       ```
-   `Working Understanding`
 
-   The filters get executed in the order you add in the `AddFilter()` which states that if you add functions : f1, f2,
-   f3 as filters and want to be executed before the actual handler executes. The Order of execution chain becomes
-    ```shell
+  `Working Understanding`
+
+  The filters get executed in the order you add in the `AddFilter()` which states that if you add functions : f1, f2, f3
+  as filters and want to be executed before the actual handler executes. The Order of execution chain becomes
+    ```shell 
     f1 --> f2 --> f3 --> handlerFunction
     ```
-   If you add Authentication Filter i.e. `AddAuthenticator()` explicitly and then add other filters to `AddFilter()`, then the order of execution of
-   chain becomes,
-    ```shell
+  If you add Authentication Filter i.e. `AddAuthenticator()` explicitly and then add other filters to `AddFilter()`,
+  then the order of execution of chain becomes,
+    ```shell 
     authFilterFunc --> f1 --> f2 --> f3 --> handlerFunction
     ```
-   Turbo gives the Authentication Filter precedence over any of the filter added to the chain. Rest all the chain order
-   gets preserved in order they are added.
+  Turbo gives the Authentication Filter precedence over any of the filter added to the chain. Rest all the chain order
+  gets preserved in order they are added.
    
