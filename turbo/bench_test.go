@@ -3,6 +3,7 @@ package turbo
 import (
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 )
@@ -74,5 +75,20 @@ func BenchmarkFindRoutePathParam(b *testing.B) {
 	}
 	for i := 0; i < b.N; i++ {
 		router.findRoute(req)
+	}
+}
+
+func BenchmarkRouter_ServeHTTP(b *testing.B) {
+	var router = NewRouter()
+	router.Get("/api/fooTest/:id", func (w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Benchmarking!"))
+	})
+	w := httptest.NewRecorder()
+	r, err := http.NewRequest(GET, "/api/fooTest/123", nil)
+	if err != nil {
+		b.Fatal(err)
+	}
+	for i := 0; i < b.N; i++ {
+		router.ServeHTTP(w, r)
 	}
 }
