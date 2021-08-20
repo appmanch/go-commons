@@ -25,6 +25,12 @@ type Router struct {
 	topLevelRoutes map[string]*Route
 }
 
+//Parameter to hold key value
+type Param struct {
+	key   string
+	value string
+}
+
 //Route : TODO Documentation
 type Route struct {
 	//name of the route fragment if this is a path variable the name of the variable will be used here.
@@ -34,6 +40,8 @@ type Route struct {
 	isPathVar bool
 	//childVarName varName
 	childVarName string
+	//hasChildVar
+	hasChildVar bool
 	//isAuthenticated keeps a check whether the route is authenticated or not
 	authFilter auth.Authenticator
 	//filters array to store the ...http.handler being registered for middleware in the router
@@ -118,6 +126,7 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 				path:         name,
 				isPathVar:    isPathVar,
 				childVarName: textutils.EmptyStr,
+				hasChildVar:  false,
 				authFilter:   nil,
 				logger:       logger,
 				handlers:     make(map[string]http.Handler),
@@ -145,6 +154,7 @@ func (router *Router) Add(path string, f func(w http.ResponseWriter, r *http.Req
 					route.subRoutes[name] = currentRoute
 					if isPathVar {
 						route.childVarName = name
+						route.hasChildVar = true
 					}
 					route = currentRoute
 				}
@@ -182,21 +192,6 @@ func prepareHandler(method string, handler http.Handler) http.Handler {
 	return handler
 }
 
-func (route *Route) DebugPrintRoute() {
-	logger.InfoF("path: %s , isPathVar: %t , childVarName: %s", route.path, route.isPathVar, route.childVarName)
-	for k, v := range route.subRoutes {
-		logger.InfoF("Printing Info of sub route %s", k)
-		v.DebugPrintRoute()
-	}
-}
-
-func (router *Router) DebugPrint() {
-	for k, v := range router.topLevelRoutes {
-		logger.InfoF("Printing Info of Top route %s", k)
-		v.DebugPrintRoute()
-	}
-}
-
 func (route *Route) addQueryVar(name string, required bool) *Route {
 	//TODO add name validation.
 	queryParams := &QueryParam{
@@ -227,7 +222,7 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// start by checking where the method of the Request is same as that of the registered method
-	match, paramsMap := router.findRoute(r)
+	match, params := router.findRoute(r)
 	if match != nil {
 		handler = match.handlers[r.Method]
 		if len(match.filters) > 0 {
@@ -247,14 +242,57 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if handler == nil {
 		handler = router.unsupportedMethodHandler
 	}
-	if len(paramsMap) > 0 {
-		r = r.WithContext(context.WithValue(r.Context(), "params", paramsMap))
+	if params != nil {
+		r = r.WithContext(context.WithValue(r.Context(), "params", params))
 	}
 	handler.ServeHTTP(w, r)
 }
 
-// findRoute : the function checks for the incoming request path whether it matches with the registered route's path or not
-func (router *Router) findRoute(req *http.Request) (*Route, map[string]string) {
+// findRoute : The function checks for the incoming request path whether it matches with any registered route's path
+func (router *Router) findRoute(req *http.Request) (*Route, []Param) {
+	var route *Route
+	var params []Param = nil
+	pathLen := len(req.URL.Path)
+	prevIdx := 1
+	lastIdx := false
+	for idx := 1; idx < pathLen; idx++ {
+		lastIdx = idx == pathLen-1
+		if req.URL.Path[idx] == textutils.ForwardSlashChar || lastIdx {
+			if lastIdx {
+				idx++
+			}
+			val := req.URL.Path[prevIdx:idx]
+			prevIdx = idx + 1
+			if route == nil {
+				route = router.topLevelRoutes[val]
+				continue
+			} else {
+				if route.hasChildVar {
+					route = route.subRoutes[route.childVarName]
+				} else {
+					if r, ok := route.subRoutes[val]; ok {
+						route = r
+					} else {
+						return nil, nil
+					}
+				}
+				if route.isPathVar {
+					if params == nil {
+						params = []Param{}
+					}
+					params = append(params, Param{
+						key:   route.path,
+						value: val,
+					})
+				}
+			}
+		}
+
+	}
+
+	return route, params
+}
+func (router *Router) findRouteOld(req *http.Request) (*Route, map[string]string) {
 	inReq := strings.Split(req.URL.Path, PathSeparator)[1:]
 	var route *Route
 	var paramsMap map[string]string = nil
@@ -286,12 +324,17 @@ func (router *Router) findRoute(req *http.Request) (*Route, map[string]string) {
 }
 
 func (router *Router) GetPathParams(id string, r *http.Request) (string, error) {
-	val, ok := r.Context().Value("params").(map[string]string)
+	params, ok := r.Context().Value("params").([]Param)
 	if !ok {
 		logger.ErrorF("Error Fetching Path Param %s", id)
 		return "err", errors.New(fmt.Sprintf("error fetching path param %s", id))
 	}
-	return val[id], nil
+	for _, p := range params {
+		if p.key == id {
+			return p.value, nil
+		}
+	}
+	return "", errors.New(fmt.Sprintf("No Such parameter %s", id))
 }
 
 func (router *Router) GetIntPathParams(id string, r *http.Request) (int, error) {

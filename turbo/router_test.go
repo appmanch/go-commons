@@ -58,7 +58,7 @@ func TestRouter_findRoute(t *testing.T) {
 		fields fields
 		args   args
 		want   *Route
-		want1  map[string]string
+		want1  []Param
 	}{
 		{
 			name: "Test1",
@@ -69,7 +69,7 @@ func TestRouter_findRoute(t *testing.T) {
 			},
 			args:  a,
 			want:  route,
-			want1: make(map[string]string),
+			want1: nil,
 		},
 	}
 	for _, tt := range tests {
@@ -147,10 +147,9 @@ func TestRouter_GetPathParams(t *testing.T) {
 			}
 
 			pathParamsMap := make(map[string]string)
-			pathParamsMap[tt.args.id]=tt.args.val
+			pathParamsMap[tt.args.id] = tt.args.val
 
 			got, _ := router.GetPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", pathParamsMap)))
-
 			logger.Info(tt.args.r.Context().Value("params"))
 			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
 				t.Errorf("GetPathParams() = %v, want %v", got, tt.want)
@@ -232,7 +231,7 @@ func TestRouter_GetIntPathParams(t *testing.T) {
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
 			pathParamsMap := make(map[string]string)
-			pathParamsMap[tt.args.id]=tt.args.val
+			pathParamsMap[tt.args.id] = tt.args.val
 
 			got, _ := router.GetIntPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", pathParamsMap)))
 
@@ -316,7 +315,7 @@ func TestRouter_GetFloatPathParams(t *testing.T) {
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
 			pathParamsMap := make(map[string]string)
-			pathParamsMap[tt.args.id]=tt.args.val
+			pathParamsMap[tt.args.id] = tt.args.val
 
 			got, _ := router.GetFloatPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", pathParamsMap)))
 
@@ -400,7 +399,7 @@ func TestRouter_GetBoolPathParams(t *testing.T) {
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
 			pathParamsMap := make(map[string]string)
-			pathParamsMap[tt.args.id]=tt.args.val
+			pathParamsMap[tt.args.id] = tt.args.val
 
 			got, _ := router.GetBoolPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", pathParamsMap)))
 
