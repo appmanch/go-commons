@@ -78,9 +78,24 @@ func BenchmarkFindRoutePathParam(b *testing.B) {
 	}
 }
 
-func BenchmarkRouter_ServeHTTP(b *testing.B) {
+func BenchmarkRouter_ServeHTTPStatic(b *testing.B) {
 	var router = NewRouter()
-	router.Get("/api/fooTest/:id", func (w http.ResponseWriter, r *http.Request) {
+	router.Get("/api/fooTest", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Benchmarking!"))
+	})
+	w := httptest.NewRecorder()
+	r, err := http.NewRequest(GET, "/api/fooTest", nil)
+	if err != nil {
+		b.Fatal(err)
+	}
+	for i := 0; i < b.N; i++ {
+		router.ServeHTTP(w, r)
+	}
+}
+
+func BenchmarkRouter_ServeHTTPParams(b *testing.B) {
+	var router = NewRouter()
+	router.Get("/api/fooTest/:id", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Benchmarking!"))
 	})
 	w := httptest.NewRecorder()

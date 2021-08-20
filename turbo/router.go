@@ -287,9 +287,7 @@ func (router *Router) findRoute(req *http.Request) (*Route, []Param) {
 				}
 			}
 		}
-
 	}
-
 	return route, params
 }
 func (router *Router) findRouteOld(req *http.Request) (*Route, map[string]string) {

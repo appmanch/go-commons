@@ -146,10 +146,15 @@ func TestRouter_GetPathParams(t *testing.T) {
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
 
-			pathParamsMap := make(map[string]string)
-			pathParamsMap[tt.args.id] = tt.args.val
+			var params []Param = nil
+			params = []Param{}
+			params = append(params,
+				Param{
+					key:   tt.args.id,
+					value: tt.args.val,
+				})
 
-			got, _ := router.GetPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", pathParamsMap)))
+			got, _ := router.GetPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", params)))
 			logger.Info(tt.args.r.Context().Value("params"))
 			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
 				t.Errorf("GetPathParams() = %v, want %v", got, tt.want)
