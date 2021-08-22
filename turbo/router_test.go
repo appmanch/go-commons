@@ -145,7 +145,6 @@ func TestRouter_GetPathParams(t *testing.T) {
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
-
 			var params []Param = nil
 			params = []Param{}
 			params = append(params,
@@ -153,7 +152,6 @@ func TestRouter_GetPathParams(t *testing.T) {
 					key:   tt.args.id,
 					value: tt.args.val,
 				})
-
 			got, _ := router.GetPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", params)))
 			logger.Info(tt.args.r.Context().Value("params"))
 			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
@@ -235,10 +233,14 @@ func TestRouter_GetIntPathParams(t *testing.T) {
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
-			pathParamsMap := make(map[string]string)
-			pathParamsMap[tt.args.id] = tt.args.val
-
-			got, _ := router.GetIntPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", pathParamsMap)))
+			var params []Param = nil
+			params = []Param{}
+			params = append(params,
+				Param{
+					key:   tt.args.id,
+					value: tt.args.val,
+				})
+			got, _ := router.GetIntPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", params)))
 
 			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
 				t.Errorf("GetIntPathParams() = %v, want %v", got, tt.want)
@@ -319,10 +321,14 @@ func TestRouter_GetFloatPathParams(t *testing.T) {
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
-			pathParamsMap := make(map[string]string)
-			pathParamsMap[tt.args.id] = tt.args.val
-
-			got, _ := router.GetFloatPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", pathParamsMap)))
+			var params []Param = nil
+			params = []Param{}
+			params = append(params,
+				Param{
+					key:   tt.args.id,
+					value: tt.args.val,
+				})
+			got, _ := router.GetFloatPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", params)))
 
 			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
 				t.Errorf("GetFloatPathParams() = %v, want %v", got, tt.want)
@@ -403,10 +409,14 @@ func TestRouter_GetBoolPathParams(t *testing.T) {
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
-			pathParamsMap := make(map[string]string)
-			pathParamsMap[tt.args.id] = tt.args.val
-
-			got, _ := router.GetBoolPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", pathParamsMap)))
+			var params []Param = nil
+			params = []Param{}
+			params = append(params,
+				Param{
+					key:   tt.args.id,
+					value: tt.args.val,
+				})
+			got, _ := router.GetBoolPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", params)))
 
 			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
 				t.Errorf("GetBoolPathParams() = %v, want %v", got, tt.want)

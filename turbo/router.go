@@ -336,33 +336,39 @@ func (router *Router) GetPathParams(id string, r *http.Request) (string, error) 
 }
 
 func (router *Router) GetIntPathParams(id string, r *http.Request) (int, error) {
-	val, ok := r.Context().Value("params").(map[string]string)
-	if !ok {
-		logger.ErrorF("Error Fetching Path Param %s", id)
-		return -1, errors.New(fmt.Sprintf("error fetching path param %s", id))
+	val, err := router.GetPathParams(id, r)
+	if err != nil {
+		return -1, err
 	}
-	valInt, err := strconv.Atoi(val[id])
-	return valInt, err
+	valInt, err := strconv.Atoi(val)
+	if err != nil {
+		return -1, err
+	}
+	return valInt, nil
 }
 
 func (router *Router) GetFloatPathParams(id string, r *http.Request) (float64, error) {
-	val, ok := r.Context().Value("params").(map[string]string)
-	if !ok {
-		logger.ErrorF("Error Fetching Path Param %s", id)
-		return -1, errors.New(fmt.Sprintf("error fetching path param %s", id))
+	val, err := router.GetPathParams(id, r)
+	if err != nil {
+		return -1, err
 	}
-	valFloat, err := strconv.ParseFloat(val[id], 64)
-	return valFloat, err
+	valFloat, err := strconv.ParseFloat(val, 64)
+	if err != nil {
+		return -1, err
+	}
+	return valFloat, nil
 }
 
 func (router *Router) GetBoolPathParams(id string, r *http.Request) (bool, error) {
-	val, ok := r.Context().Value("params").(map[string]string)
-	if !ok {
-		logger.ErrorF("Error Fetching Path Param %s", id)
-		return false, errors.New(fmt.Sprintf("error fetching path param %s", id))
+	val, err := router.GetPathParams(id, r)
+	if err != nil {
+		return false, err
 	}
-	valBool, err := strconv.ParseBool(val[id])
-	return valBool, err
+	valBool, err := strconv.ParseBool(val)
+	if err != nil {
+		return false, err
+	}
+	return valBool, nil
 }
 
 func (router *Router) GetQueryParams(id string, r *http.Request) (string, error) {
