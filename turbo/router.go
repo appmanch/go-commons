@@ -290,36 +290,6 @@ func (router *Router) findRoute(req *http.Request) (*Route, []Param) {
 	}
 	return route, params
 }
-func (router *Router) findRouteOld(req *http.Request) (*Route, map[string]string) {
-	inReq := strings.Split(req.URL.Path, PathSeparator)[1:]
-	var route *Route
-	var paramsMap map[string]string = nil
-	for _, val := range inReq {
-		if route == nil {
-			route = router.topLevelRoutes[val]
-			continue
-		} else {
-			if route.childVarName != textutils.EmptyStr {
-				route = route.subRoutes[route.childVarName]
-			} else {
-				if r, ok := route.subRoutes[val]; ok {
-					route = r
-				} else {
-					return nil, nil
-				}
-			}
-			if route.isPathVar {
-				paramsMap = make(map[string]string)
-				if val == "" {
-					logger.ErrorF("Route Registered with a Path Param : %s", route.path)
-					return nil, nil
-				}
-				paramsMap[route.path] = val
-			}
-		}
-	}
-	return route, paramsMap
-}
 
 func (router *Router) GetPathParams(id string, r *http.Request) (string, error) {
 	params, ok := r.Context().Value("params").([]Param)
