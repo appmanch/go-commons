@@ -1,5 +1,7 @@
 # go-commons
 
+![Builds Status](https://github.com/appmanch/go-commons/workflows/Build_CI/badge.svg)
+
 Go Commons is a collection of reusable common utilities
 
 # Goals

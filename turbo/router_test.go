@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"sync"
 	"testing"
 )
-
-var router = NewRouter()
 
 func TestNewRouter(t *testing.T) {
 	tests := []struct {
@@ -59,7 +58,7 @@ func TestRouter_findRoute(t *testing.T) {
 		fields fields
 		args   args
 		want   *Route
-		want1  context.Context
+		want1  []Param
 	}{
 		{
 			name: "Test1",
@@ -70,7 +69,7 @@ func TestRouter_findRoute(t *testing.T) {
 			},
 			args:  a,
 			want:  route,
-			want1: context.Background(),
+			want1: nil,
 		},
 	}
 	for _, tt := range tests {
@@ -80,12 +79,13 @@ func TestRouter_findRoute(t *testing.T) {
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
-			got, got1 := router.findRoute(tt.args.req)
+			got, gotMap := router.findRoute(tt.args.req)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("findRoute() got = %v, want %v", got, tt.want)
 			}
-			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("findRoute() got1 = %v, want %v", got1, tt.want1)
+
+			if reflect.TypeOf(gotMap) != reflect.TypeOf(tt.want1) {
+				t.Errorf("findRoute() got = %v, want %v", gotMap, tt.want1)
 			}
 		})
 	}
@@ -145,11 +145,37 @@ func TestRouter_GetPathParams(t *testing.T) {
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
-			ctx := context.WithValue(context.Background(), tt.args.id, tt.args.val)
-			if got := router.GetPathParams(tt.args.id, tt.args.r.WithContext(ctx)); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+			var params []Param = nil
+			params = []Param{}
+			params = append(params,
+				Param{
+					key:   tt.args.id,
+					value: tt.args.val,
+				})
+			got, _ := router.GetPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", params)))
+			logger.Info(tt.args.r.Context().Value("params"))
+			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+				t.Errorf("GetPathParams() = %v, want %v", got, tt.want)
+			}
+			if got != tt.want {
 				t.Errorf("GetPathParams() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestRouter_GetPathParamsFail(t *testing.T) {
+	req := &http.Request{}
+	router := &Router{
+		unManagedRouteHandler:    nil,
+		unsupportedMethodHandler: nil,
+		topLevelRoutes:           nil,
+	}
+	got, err := router.GetPathParams("foo", req)
+	if err != nil {
+		if got != "err" {
+			t.Errorf("GetPathParams() = %v, want %v", got, "err")
+		}
 	}
 }
 
@@ -162,7 +188,7 @@ func TestRouter_GetIntPathParams(t *testing.T) {
 	}
 	type args struct {
 		id  string
-		val int
+		val string
 		r   *http.Request
 	}
 	tests := []struct {
@@ -180,7 +206,7 @@ func TestRouter_GetIntPathParams(t *testing.T) {
 			},
 			args: args{
 				id:  "key",
-				val: 2134,
+				val: "2134",
 				r:   req,
 			},
 			want: 2134,
@@ -194,7 +220,7 @@ func TestRouter_GetIntPathParams(t *testing.T) {
 			},
 			args: args{
 				id:  "key2",
-				val: 7337,
+				val: "7337",
 				r:   req,
 			},
 			want: 7337,
@@ -207,11 +233,37 @@ func TestRouter_GetIntPathParams(t *testing.T) {
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
-			ctx := context.WithValue(context.Background(), tt.args.id, tt.args.val)
-			if got := router.GetIntPathParams(tt.args.id, tt.args.r.WithContext(ctx)); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+			var params []Param = nil
+			params = []Param{}
+			params = append(params,
+				Param{
+					key:   tt.args.id,
+					value: tt.args.val,
+				})
+			got, _ := router.GetIntPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", params)))
+
+			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+				t.Errorf("GetIntPathParams() = %v, want %v", got, tt.want)
+			}
+			if got != tt.want {
 				t.Errorf("GetIntPathParams() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestRouter_GetIntPathParamsFail(t *testing.T) {
+	req := &http.Request{}
+	router := &Router{
+		unManagedRouteHandler:    nil,
+		unsupportedMethodHandler: nil,
+		topLevelRoutes:           nil,
+	}
+	got, err := router.GetIntPathParams("foo", req)
+	if err != nil {
+		if got != -1 {
+			t.Errorf("GetIntPathParams() = %v, want %v", got, "err")
+		}
 	}
 }
 
@@ -224,7 +276,7 @@ func TestRouter_GetFloatPathParams(t *testing.T) {
 	}
 	type args struct {
 		id  string
-		val float64
+		val string
 		r   *http.Request
 	}
 	tests := []struct {
@@ -242,7 +294,7 @@ func TestRouter_GetFloatPathParams(t *testing.T) {
 			},
 			args: args{
 				id:  "key",
-				val: 73.37,
+				val: "73.37",
 				r:   req,
 			},
 			want: 73.37,
@@ -256,7 +308,7 @@ func TestRouter_GetFloatPathParams(t *testing.T) {
 			},
 			args: args{
 				id:  "key2",
-				val: 73.33333337,
+				val: "73.33333337",
 				r:   req,
 			},
 			want: 73.33333337,
@@ -269,11 +321,37 @@ func TestRouter_GetFloatPathParams(t *testing.T) {
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
-			ctx := context.WithValue(context.Background(), tt.args.id, tt.args.val)
-			if got := router.GetFloatPathParams(tt.args.id, tt.args.r.WithContext(ctx)); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+			var params []Param = nil
+			params = []Param{}
+			params = append(params,
+				Param{
+					key:   tt.args.id,
+					value: tt.args.val,
+				})
+			got, _ := router.GetFloatPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", params)))
+
+			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+				t.Errorf("GetFloatPathParams() = %v, want %v", got, tt.want)
+			}
+			if got != tt.want {
 				t.Errorf("GetFloatPathParams() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestRouter_GetFloatPathParamsFail(t *testing.T) {
+	req := &http.Request{}
+	router := &Router{
+		unManagedRouteHandler:    nil,
+		unsupportedMethodHandler: nil,
+		topLevelRoutes:           nil,
+	}
+	got, err := router.GetFloatPathParams("foo", req)
+	if err != nil {
+		if got != -1 {
+			t.Errorf("GetFloatPathParams() = %v, want %v", got, "err")
+		}
 	}
 }
 
@@ -286,7 +364,7 @@ func TestRouter_GetBoolPathParams(t *testing.T) {
 	}
 	type args struct {
 		id  string
-		val bool
+		val string
 		r   *http.Request
 	}
 	tests := []struct {
@@ -304,7 +382,7 @@ func TestRouter_GetBoolPathParams(t *testing.T) {
 			},
 			args: args{
 				id:  "key",
-				val: true,
+				val: "true",
 				r:   req,
 			},
 			want: true,
@@ -318,7 +396,7 @@ func TestRouter_GetBoolPathParams(t *testing.T) {
 			},
 			args: args{
 				id:  "key2",
-				val: false,
+				val: "false",
 				r:   req,
 			},
 			want: false,
@@ -331,11 +409,37 @@ func TestRouter_GetBoolPathParams(t *testing.T) {
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
-			ctx := context.WithValue(context.Background(), tt.args.id, tt.args.val)
-			if got := router.GetBoolPathParams(tt.args.id, tt.args.r.WithContext(ctx)); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+			var params []Param = nil
+			params = []Param{}
+			params = append(params,
+				Param{
+					key:   tt.args.id,
+					value: tt.args.val,
+				})
+			got, _ := router.GetBoolPathParams(tt.args.id, tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), "params", params)))
+
+			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+				t.Errorf("GetBoolPathParams() = %v, want %v", got, tt.want)
+			}
+			if got != tt.want {
 				t.Errorf("GetBoolPathParams() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestRouter_GetBoolPathParamsFail(t *testing.T) {
+	req := &http.Request{}
+	router := &Router{
+		unManagedRouteHandler:    nil,
+		unsupportedMethodHandler: nil,
+		topLevelRoutes:           nil,
+	}
+	got, err := router.GetBoolPathParams("foo", req)
+	if err != nil {
+		if got != false {
+			t.Errorf("GetBoolPathParams() = %v, want %v", got, "err")
+		}
 	}
 }
 
@@ -394,7 +498,7 @@ func TestRouter_GetQueryParams(t *testing.T) {
 				id: "test3",
 				r:  &http.Request{URL: strUrl},
 			},
-			want: "",
+			want: "err",
 		},
 	}
 	for _, tt := range tests {
@@ -404,10 +508,11 @@ func TestRouter_GetQueryParams(t *testing.T) {
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
-			if got := router.GetQueryParams(tt.args.id, tt.args.r); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+			got, _ := router.GetQueryParams(tt.args.id, tt.args.r)
+			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
 				t.Errorf("GetQueryParams() Type Got = %v, want %v", got, tt.want)
 			}
-			if got := router.GetQueryParams(tt.args.id, tt.args.r); got != tt.want {
+			if got != tt.want {
 				t.Errorf("GetQueryParams() Value Got = %v, want %v", got, tt.want)
 			}
 		})
@@ -470,7 +575,7 @@ func TestRouter_GetIntQueryParams(t *testing.T) {
 				id: "test1",
 				r:  &http.Request{URL: intUrlFail},
 			},
-			want: 0,
+			want: -1,
 		},
 	}
 	for _, tt := range tests {
@@ -480,10 +585,11 @@ func TestRouter_GetIntQueryParams(t *testing.T) {
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
-			if got := router.GetIntQueryParams(tt.args.id, tt.args.r); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+			got, _ := router.GetIntQueryParams(tt.args.id, tt.args.r)
+			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
 				t.Errorf("GetIntQueryParams() = %v, want %v", got, tt.want)
 			}
-			if got := router.GetIntQueryParams(tt.args.id, tt.args.r); got != tt.want {
+			if got != tt.want {
 				t.Errorf("GetIntQueryParams() Value Got = %v, want %v", got, tt.want)
 			}
 		})
@@ -546,7 +652,7 @@ func TestRouter_GetFloatQueryParams(t *testing.T) {
 				id: "test1",
 				r:  &http.Request{URL: floatUrlFail},
 			},
-			want: 0,
+			want: -1,
 		},
 	}
 	for _, tt := range tests {
@@ -556,10 +662,11 @@ func TestRouter_GetFloatQueryParams(t *testing.T) {
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
-			if got := router.GetFloatQueryParams(tt.args.id, tt.args.r); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+			got, _ := router.GetFloatQueryParams(tt.args.id, tt.args.r)
+			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
 				t.Errorf("GetFloatQueryParams() = %v, want %v", got, tt.want)
 			}
-			if got := router.GetFloatQueryParams(tt.args.id, tt.args.r); got != tt.want {
+			if got != tt.want {
 				t.Errorf("GetFloatQueryParams() Value Got = %v, want %v", got, tt.want)
 			}
 		})
@@ -632,10 +739,11 @@ func TestRouter_GetBoolQueryParams(t *testing.T) {
 				unsupportedMethodHandler: tt.fields.unsupportedMethodHandler,
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
-			if got := router.GetBoolQueryParams(tt.args.id, tt.args.r); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
+			got, _ := router.GetBoolQueryParams(tt.args.id, tt.args.r)
+			if reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
 				t.Errorf("GetBoolQueryParams() = %v, want %v", got, tt.want)
 			}
-			if got := router.GetBoolQueryParams(tt.args.id, tt.args.r); got != tt.want {
+			if got != tt.want {
 				t.Errorf("GetBoolQueryParams() Value Got = %v, want %v", got, tt.want)
 			}
 		})
@@ -727,7 +835,7 @@ func TestRouter_Get(t *testing.T) {
 				topLevelRoutes:           tt.fields.topLevelRoutes,
 			}
 			if got := router.Get(tt.args.path, tt.args.f); reflect.TypeOf(got) != reflect.TypeOf(tt.want) {
-				t.Errorf("Get() = %v, want %v", got, tt.want)
+				t.Errorf("Apply() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -794,4 +902,132 @@ func TestRouter_Add(t *testing.T) {
 			}
 		})
 	}
+}
+
+func dummyHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Test Passes"))
+}
+
+func dummyFilter(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger.Info("dummy Filter Added")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func TestRouter_ServeHTTP(t *testing.T) {
+	var router = NewRouter()
+	router.Get("/api/fooTest", dummyHandler)
+	router.Delete("/api/deleteFoo", dummyHandler)
+	router.Put("/api/putFoo/:id", dummyHandler)
+	router.Post("/api/putBar/:id", dummyHandler)
+	router.Get("/api/foo", dummyHandler).AddFilter(dummyFilter)
+
+	type args struct {
+		path   string
+		f      func(w http.ResponseWriter, r *http.Request)
+		method string
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			name: "Test1",
+			args: args{
+				path:   "/api/fooTest",
+				f:      dummyHandler,
+				method: GET,
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "Test2",
+			args: args{
+				path:   "/api/fooTest",
+				f:      dummyHandler,
+				method: PUT,
+			},
+			want: http.StatusMethodNotAllowed,
+		},
+		{
+			name: "Test3",
+			args: args{
+				path:   "/api/fooTest/bar",
+				f:      dummyHandler,
+				method: PUT,
+			},
+			want: http.StatusNotFound,
+		},
+		{
+			name: "Test4",
+			args: args{
+				path:   "///api///fooTest//",
+				f:      dummyHandler,
+				method: GET,
+			},
+			want: http.StatusMovedPermanently,
+		},
+		{
+			name: "Test5",
+			args: args{
+				path:   "api///fooTest//",
+				f:      dummyHandler,
+				method: GET,
+			},
+			want: http.StatusMovedPermanently,
+		},
+		{
+			name: "Test6",
+			args: args{
+				path:   "",
+				f:      dummyHandler,
+				method: GET,
+			},
+			want: http.StatusMovedPermanently,
+		},
+		{
+			name: "Test7",
+			args: args{
+				path:   "/api/foo",
+				f:      dummyHandler,
+				method: GET,
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "Test8",
+			args: args{
+				path:   "/api/putFoo/",
+				f:      dummyHandler,
+				method: PUT,
+			},
+			want: http.StatusNotFound,
+		},
+		{
+			name: "Test9",
+			args: args{
+				path:   "/api/putBar/123",
+				f:      dummyHandler,
+				method: POST,
+			},
+			want: http.StatusOK,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			r, err := http.NewRequest(tt.args.method, tt.args.path, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			router.ServeHTTP(w, r)
+			if w.Result().StatusCode != tt.want {
+				t.Errorf("ServeHttp() got = %v, want = %v", w.Result().StatusCode, tt.want)
+			}
+		})
+	}
+
 }
