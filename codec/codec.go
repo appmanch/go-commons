@@ -158,16 +158,24 @@ type BytesDecoder interface {
 	DecodeBytes(b []byte, v interface{}) error
 }
 
+type JSONEncoder interface {
+	JSONParser(v interface{}) ([]byte, error)
+}
+
+type JSONDecoder interface {
+	JSONMapper(data []byte, v interface{}) error
+}
+
 // Encoder Interface
 type Encoder interface {
 	StringEncoder
-	BytesEncoder
+	JSONEncoder
 }
 
 // Decoder Interface
 type Decoder interface {
 	StringDecoder
-	BytesDecoder
+	JSONDecoder
 }
 
 type ReaderWriter interface {
@@ -197,12 +205,16 @@ func (d defaultCodec) DecodeString(s string, v interface{}) error {
 	return d.Read(r, v)
 }
 
-func (d defaultCodec) DecodeBytes(b []byte, v interface{}) error {
+// DecodeBytes : might not be needed as we would be moving the JSON operations to separate file
+// ----->>> JSONMapper
+/*func (d defaultCodec) DecodeBytes(b []byte, v interface{}) error {
 	r := bytes.NewReader(b)
 	return d.Read(r, v)
-}
+}*/
 
-func (d defaultCodec) EncodeToBytes(v interface{}) ([]byte, error) {
+// EncodeToBytes : might not be needed as we would be moving the JSON operations to separate file
+// ----->>> JSONParser
+/*func (d defaultCodec) EncodeToBytes(v interface{}) ([]byte, error) {
 	buf := &bytes.Buffer{}
 	e := d.Write(v, buf)
 	if e == nil {
@@ -210,7 +222,7 @@ func (d defaultCodec) EncodeToBytes(v interface{}) ([]byte, error) {
 	} else {
 		return nil, e
 	}
-}
+}*/
 
 func (d defaultCodec) EncodeToString(v interface{}) (string, error) {
 	buf := &bytes.Buffer{}
