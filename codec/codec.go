@@ -9,6 +9,7 @@ import (
 	"go.appmanch.org/commons/textutils"
 )
 
+// StructMeta Struct
 type StructMeta struct {
 	Fields map[string]string
 }
@@ -17,18 +18,19 @@ type StructMeta struct {
 type FieldMeta struct {
 	// Name of the field
 	Name string
-	//Dimension holds the field dimension
+	// Dimension holds the field dimension
 	Dimension int
-	//Required flag indicating if the field is a requried field.
+	// Required flag indicating if the field is a required field.
 	Required bool
 	// TargetNames stores map for known format types. This allows
 	TargetNames map[string]string
-	//TargetConfig stores configuration that is required by the target format . for Eg. Attribute config for XML etc.
+	// TargetConfig stores configuration that is required by the target format . for Eg. Attribute config for XML etc.
 	TargetConfig map[string]string
-	//Sequence specifies the order  of the fields in the source/target format
+	// Sequence specifies the order  of the fields in the source/target format
 	Sequence int
 }
 
+// StringFieldMeta Struct
 type StringFieldMeta struct {
 	FieldMeta
 	DefaultVal string
@@ -38,6 +40,7 @@ type StringFieldMeta struct {
 	Length     int
 }
 
+// Int8FieldMeta Struct
 type Int8FieldMeta struct {
 	FieldMeta
 	DefaultVal int8
@@ -45,6 +48,7 @@ type Int8FieldMeta struct {
 	Max        int8
 }
 
+// Int16FieldMeta Struct
 type Int16FieldMeta struct {
 	FieldMeta
 	DefaultVal int16
@@ -52,6 +56,7 @@ type Int16FieldMeta struct {
 	Max        int16
 }
 
+// Int32FieldMeta Struct
 type Int32FieldMeta struct {
 	FieldMeta
 	DefaultVal int16
@@ -59,6 +64,7 @@ type Int32FieldMeta struct {
 	Max        int32
 }
 
+// IntFieldMeta Struct
 type IntFieldMeta struct {
 	FieldMeta
 	DefaultVal int
@@ -66,6 +72,7 @@ type IntFieldMeta struct {
 	Max        int
 }
 
+// UInt8FieldMeta Struct
 type UInt8FieldMeta struct {
 	FieldMeta
 	DefaultVal uint8
@@ -73,6 +80,7 @@ type UInt8FieldMeta struct {
 	Max        uint8
 }
 
+// UInt16FieldMeta Struct
 type UInt16FieldMeta struct {
 	FieldMeta
 	DefaultVal uint16
@@ -80,6 +88,7 @@ type UInt16FieldMeta struct {
 	Max        uint16
 }
 
+// UInt32FieldMeta Struct
 type UInt32FieldMeta struct {
 	FieldMeta
 	DefaultVal uint32
@@ -87,6 +96,7 @@ type UInt32FieldMeta struct {
 	Max        uint32
 }
 
+// UIntFieldMeta Struct
 type UIntFieldMeta struct {
 	FieldMeta
 	DefaultVal uint
@@ -94,6 +104,7 @@ type UIntFieldMeta struct {
 	Max        uint
 }
 
+// UInt64FieldMeta Struct
 type UInt64FieldMeta struct {
 	FieldMeta
 	DefaultVal uint64
@@ -101,6 +112,7 @@ type UInt64FieldMeta struct {
 	Max        uint64
 }
 
+// Float32FieldMeta Struct
 type Float32FieldMeta struct {
 	FieldMeta
 	DefaultVal float32
@@ -108,48 +120,51 @@ type Float32FieldMeta struct {
 	Max        float32
 }
 
+// Float64FieldMeta Struct
 type Float64FieldMeta struct {
 	FieldMeta
 	DefaultVal float64
 	Min        float64
 	Max        float64
 }
+
+// BooleanFieldMeta Struct
 type BooleanFieldMeta struct {
 	FieldMeta
 	DefaultVal bool
 }
 
-//StringEncoder interface
+// StringEncoder Interface
 type StringEncoder interface {
-	//EncodeToString will encode  a type to string
+	//EncodeToString will encode a type to string
 	EncodeToString(v interface{}) (string, error)
 }
 
-//BytesEncoder interface
+// BytesEncoder Interface
 type BytesEncoder interface {
 	// EncodeToBytes will encode the provided type to []byte
 	EncodeToBytes(v interface{}) ([]byte, error)
 }
 
-//StringDecoder interface
+// StringDecoder Interface
 type StringDecoder interface {
 	//DecodeString will decode  a type from string
 	DecodeString(s string, v interface{}) error
 }
 
-//BytesDecoder inferface
+// BytesDecoder Interface
 type BytesDecoder interface {
 	//DecodeBytes will decode a type from an array of bytes
 	DecodeBytes(b []byte, v interface{}) error
 }
 
-//Encoder
+// Encoder Interface
 type Encoder interface {
 	StringEncoder
 	BytesEncoder
 }
 
-//Decoder Interface
+// Decoder Interface
 type Decoder interface {
 	StringDecoder
 	BytesDecoder
@@ -208,7 +223,6 @@ func (d defaultCodec) EncodeToString(v interface{}) (string, error) {
 }
 
 func (d defaultCodec) Read(r io.Reader, v interface{}) error {
-
 	return errors.New("reader is not implemented in base codec")
 }
 
