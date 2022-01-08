@@ -196,7 +196,7 @@ type Codec interface {
 type defaultCodec struct {
 }
 
-func Get(v interface{}) Codec {
+func Get() Codec {
 	return defaultCodec{}
 }
 
@@ -239,6 +239,7 @@ func (d defaultCodec) Read(r io.Reader, v interface{}) error {
 }
 
 func (d defaultCodec) Write(v interface{}, w io.Writer) error {
+
 	return errors.New("writer is not implemented in base codec")
 }
 
