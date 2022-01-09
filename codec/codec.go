@@ -3,9 +3,12 @@ package codec
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
+	"reflect"
 	"strings"
 
+	"go.appmanch.org/commons/codec/json"
 	"go.appmanch.org/commons/textutils"
 )
 
@@ -205,12 +208,42 @@ func (d defaultCodec) DecodeString(s string, v interface{}) error {
 	return d.Read(r, v)
 }
 
+// JSONMapper : maps the incoming JSON Bytes to the provided Struct
+// Decoding of the JSON Bytes to the Struct
+func (d defaultCodec) JSONMapper(data []byte, v interface{}) error {
+	// placeholder logic
+	// logic WIP
+	r := bytes.NewReader(data)
+	return d.Read(r, v)
+}
+
 // DecodeBytes : might not be needed as we would be moving the JSON operations to separate file
 // ----->>> JSONMapper
 /*func (d defaultCodec) DecodeBytes(b []byte, v interface{}) error {
 	r := bytes.NewReader(b)
 	return d.Read(r, v)
 }*/
+
+// JSON Module of the codec used to perform the JSON manipulation with the help of codec
+// Encoding and Decoding of the JSON Data performed
+
+// JSONParser : parses the incoming struct and converts it to the JSON Bytes
+// Encoding of Struct to the JSON Bytes
+/**
+{
+	"name": "test"
+}
+*/
+func (d defaultCodec) JSONParser(v interface{}) ([]byte, error) {
+	// placeholder logic
+	// logic WIP
+	fmt.Println(reflect.ValueOf(v).Type())
+	j, err := json.Serialize(v)
+	if err != nil {
+		return nil, err
+	}
+	return j, nil
+}
 
 // EncodeToBytes : might not be needed as we would be moving the JSON operations to separate file
 // ----->>> JSONParser
