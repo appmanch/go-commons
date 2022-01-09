@@ -1,4 +1,4 @@
-# go-commons : codec
+# codec
 
 ### Supporting Schemes
 | Scheme    | Status |
