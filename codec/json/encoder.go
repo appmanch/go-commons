@@ -2,7 +2,9 @@ package json
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
+	"sync"
 )
 
 func Serialize(v interface{}) ([]byte, error) {
@@ -11,7 +13,6 @@ func Serialize(v interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.reflectValue(reflect.ValueOf(v))
 	buf := append([]byte(nil), s.Bytes()...)
 	return buf, nil
 }
@@ -21,8 +22,12 @@ func (s *serializedState) serialize(v interface{}) (err error) {
 	return nil
 }
 
+// TODO
+// To be implemented
+var serializerCache sync.Map
+
 func (s *serializedState) reflectValue(v reflect.Value) {
-	valueSerializer(v)
+	checkSerializer(v)(s, v)
 }
 
 type serializedState struct {
@@ -34,15 +39,26 @@ type serializedState struct {
 
 type serializerFunc func(e *serializedState, v reflect.Value)
 
-func valueSerializer(v reflect.Value) serializerFunc {
+func checkSerializer(v reflect.Value) serializerFunc {
+	if !v.IsValid() {
+		//return invalidEncoding
+	}
+	if fi, ok := serializerCache.Load(v.Type()); ok {
+		return fi.(serializerFunc)
+	}
+	f := valueSerializer(v.Type())
+	serializerCache.Store(v.Type(), f)
+	return f
+}
 
-	switch v.Type().Kind() {
+func valueSerializer(t reflect.Type) serializerFunc {
+	switch t.Kind() {
 	case reflect.Bool:
 		return boolSerializer
 	case reflect.Int:
 		return intSerializer
 	case reflect.Struct:
-		return structSerializer(v.Type())
+		return structSerializer(t)
 	case reflect.String:
 		return stringSerializer
 	default:
@@ -70,12 +86,21 @@ type structFields struct {
 }
 
 func structSerializer(t reflect.Type) serializerFunc {
-	ss := structSerializerStruct{fields: fetchFields(t)}
+	ss := structSerializerStruct{fields: loadFields(t)}
 	return ss.serialize
 }
 
 func (ss structSerializerStruct) serialize(e *serializedState, v reflect.Value) {
 	// TODO
+	//next := byte('{')
+	//loopFields:
+	fmt.Println("serialize")
+	fmt.Println("list", ss.fields.list)
+	for i := range ss.fields.list {
+		field := &ss.fields.list[i]
+		fmt.Println("field", field)
+	}
+
 }
 
 func stringSerializer(e *serializedState, v reflect.Value) {}
@@ -83,7 +108,7 @@ func stringSerializer(e *serializedState, v reflect.Value) {}
 func unsupportedSerializer(e *serializedState, v reflect.Value) {}
 
 // fetches the fields from the input struct and returns the fields mapped to the structFields
-func fetchFields(t reflect.Type) structFields {
+func loadFields(t reflect.Type) structFields {
 
 	// TODO
 

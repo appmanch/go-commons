@@ -3,9 +3,7 @@ package codec
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
-	"reflect"
 	"strings"
 
 	"go.appmanch.org/commons/codec/json"
@@ -237,7 +235,6 @@ func (d defaultCodec) JSONMapper(data []byte, v interface{}) error {
 func (d defaultCodec) JSONParser(v interface{}) ([]byte, error) {
 	// placeholder logic
 	// logic WIP
-	fmt.Println(reflect.ValueOf(v).Type())
 	j, err := json.Serialize(v)
 	if err != nil {
 		return nil, err
