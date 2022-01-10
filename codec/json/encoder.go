@@ -94,11 +94,11 @@ func (ss structSerializerStruct) serialize(e *serializedState, v reflect.Value) 
 	// TODO
 	//next := byte('{')
 	//loopFields:
-	fmt.Println("serialize")
-	fmt.Println("list", ss.fields.list)
 	for i := range ss.fields.list {
 		field := &ss.fields.list[i]
-		fmt.Println("field", field)
+		fmt.Println("field", field.name)
+		fieldValue := v.Field(i)
+		fmt.Println("value", fieldValue)
 	}
 
 }
@@ -111,6 +111,23 @@ func unsupportedSerializer(e *serializedState, v reflect.Value) {}
 func loadFields(t reflect.Type) structFields {
 
 	// TODO
+	// loop through the fields
 
-	return structFields{}
+	var fields []field
+
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		field := field{
+			name: f.Name,
+			typ:  f.Type,
+		}
+		fields = append(fields, field)
+	}
+
+	nameIdx := make(map[string]int, len(fields))
+	for i, field := range fields {
+		nameIdx[field.name] = i
+	}
+
+	return structFields{fields, nameIdx}
 }
