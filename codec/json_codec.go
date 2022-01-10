@@ -3,6 +3,8 @@ package codec
 import (
 	"errors"
 	"io"
+
+	"go.appmanch.org/commons/codec/json"
 )
 
 type JsonCodec struct {
@@ -21,6 +23,13 @@ func JsonRW(v interface{}) *JsonCodec {
 }
 
 func (c *JsonCodec) Write(v interface{}, w io.Writer) error {
+
+	if err := json.Validate(v); err != nil {
+		// if the input struct is not validated against the `constraints` then we fail the encoding part here
+		return nil
+	}
+	// if the validation is successful then use the core json marshal to generate the json from the struct and write it back to the buffer
+
 	return nil //TODO Implement
 }
 

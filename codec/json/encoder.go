@@ -4,8 +4,46 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 )
+
+func Validate(v interface{}) error {
+
+	value := reflect.ValueOf(v)
+	typ := value.Type()
+
+	var fields []field
+
+	for i := 0; i < typ.NumField(); i++ {
+		f := typ.Field(i)
+
+		tag := f.Tag.Get("constraints")
+		name, opts := parseTag(tag)
+
+		field := field{
+			name: f.Name,
+			typ:  f.Type,
+		}
+		fields = append(fields, field)
+	}
+
+	nameIdx := make(map[string]int, len(fields))
+	for i, field := range fields {
+		nameIdx[field.name] = i
+	}
+
+	return nil
+}
+
+type tagOptions string
+
+func parseTag(tag string) (string, tagOptions) {
+	if idx := strings.Index(tag, ","); idx != -1 {
+		return tag[:idx], tagOptions(tag[idx+1:])
+	}
+	return tag, ""
+}
 
 func Serialize(v interface{}) ([]byte, error) {
 	s := &serializedState{}
