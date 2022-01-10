@@ -2,12 +2,16 @@ package codec
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"strings"
 
-	"go.appmanch.org/commons/codec/json"
 	"go.appmanch.org/commons/textutils"
+)
+
+const (
+	JSON = "application/json"
+	XML  = "text/xml"
+	YAML = "text/x-yaml"
 )
 
 // StructMeta Struct
@@ -29,110 +33,113 @@ type FieldMeta struct {
 	TargetConfig map[string]string
 	// Sequence specifies the order  of the fields in the source/target format
 	Sequence int
+	//SkipField indicates that if the value of the field is absent/nil then skip the field while writing to data
+	//This is similar to omitempty
+	SkipField bool
 }
 
 // StringFieldMeta Struct
 type StringFieldMeta struct {
 	FieldMeta
-	DefaultVal string
-	Pattern    string
-	Format     string
-	OmitEmpty  bool
-	Length     int
+	DefaultVal *string
+	Pattern    *string
+	Format     *string
+	MinLength  *int
+	MaxLength  *int
 }
 
 // Int8FieldMeta Struct
 type Int8FieldMeta struct {
 	FieldMeta
-	DefaultVal int8
-	Min        int8
-	Max        int8
+	DefaultVal *int8
+	Min        *int8
+	Max        *int8
 }
 
 // Int16FieldMeta Struct
 type Int16FieldMeta struct {
 	FieldMeta
-	DefaultVal int16
-	Min        int16
-	Max        int16
+	DefaultVal *int16
+	Min        *int16
+	Max        *int16
 }
 
 // Int32FieldMeta Struct
 type Int32FieldMeta struct {
 	FieldMeta
-	DefaultVal int16
-	Min        int32
-	Max        int32
+	DefaultVal *int16
+	Min        *int32
+	Max        *int32
 }
 
 // IntFieldMeta Struct
 type IntFieldMeta struct {
 	FieldMeta
-	DefaultVal int
-	Min        int
-	Max        int
+	DefaultVal *int
+	Min        *int
+	Max        *int
 }
 
 // UInt8FieldMeta Struct
 type UInt8FieldMeta struct {
 	FieldMeta
-	DefaultVal uint8
-	Min        uint8
-	Max        uint8
+	DefaultVal *uint8
+	Min        *uint8
+	Max        *uint8
 }
 
 // UInt16FieldMeta Struct
 type UInt16FieldMeta struct {
 	FieldMeta
-	DefaultVal uint16
-	Min        uint16
-	Max        uint16
+	DefaultVal *uint16
+	Min        *uint16
+	Max        *uint16
 }
 
 // UInt32FieldMeta Struct
 type UInt32FieldMeta struct {
 	FieldMeta
-	DefaultVal uint32
-	Min        uint32
-	Max        uint32
+	DefaultVal *uint32
+	Min        *uint32
+	Max        *uint32
 }
 
 // UIntFieldMeta Struct
 type UIntFieldMeta struct {
 	FieldMeta
-	DefaultVal uint
-	Min        uint
-	Max        uint
+	DefaultVal *uint
+	Min        *uint
+	Max        *uint
 }
 
 // UInt64FieldMeta Struct
 type UInt64FieldMeta struct {
 	FieldMeta
-	DefaultVal uint64
-	Min        uint64
-	Max        uint64
+	DefaultVal *uint64
+	Min        *uint64
+	Max        *uint64
 }
 
 // Float32FieldMeta Struct
 type Float32FieldMeta struct {
 	FieldMeta
-	DefaultVal float32
-	Min        float32
-	Max        float32
+	DefaultVal *float32
+	Min        *float32
+	Max        *float32
 }
 
 // Float64FieldMeta Struct
 type Float64FieldMeta struct {
 	FieldMeta
-	DefaultVal float64
-	Min        float64
-	Max        float64
+	DefaultVal *float64
+	Min        *float64
+	Max        *float64
 }
 
 // BooleanFieldMeta Struct
 type BooleanFieldMeta struct {
 	FieldMeta
-	DefaultVal bool
+	DefaultVal *bool
 }
 
 // StringEncoder Interface
@@ -159,24 +166,16 @@ type BytesDecoder interface {
 	DecodeBytes(b []byte, v interface{}) error
 }
 
-type JSONEncoder interface {
-	JSONParser(v interface{}) ([]byte, error)
-}
-
-type JSONDecoder interface {
-	JSONMapper(data []byte, v interface{}) error
-}
-
 // Encoder Interface
 type Encoder interface {
 	StringEncoder
-	JSONEncoder
+	BytesEncoder
 }
 
 // Decoder Interface
 type Decoder interface {
 	StringDecoder
-	JSONDecoder
+	BytesDecoder
 }
 
 type ReaderWriter interface {
@@ -191,72 +190,51 @@ type Codec interface {
 	Decoder
 	Encoder
 	ReaderWriter
-	Register(v interface{}) error
 }
 
-type defaultCodec struct {
+type BaseCodec struct {
+	readerWriter ReaderWriter
 }
 
-func Get() Codec {
-	return defaultCodec{}
-}
-
-func (d defaultCodec) DecodeString(s string, v interface{}) error {
-	r := strings.NewReader(s)
-	return d.Read(r, v)
-}
-
-// JSONMapper : maps the incoming JSON Bytes to the provided Struct
-// Decoding of the JSON Bytes to the Struct
-func (d defaultCodec) JSONMapper(data []byte, v interface{}) error {
-	// placeholder logic
-	// logic WIP
-	r := bytes.NewReader(data)
-	return d.Read(r, v)
-}
-
-// DecodeBytes : might not be needed as we would be moving the JSON operations to separate file
-// ----->>> JSONMapper
-/*func (d defaultCodec) DecodeBytes(b []byte, v interface{}) error {
-	r := bytes.NewReader(b)
-	return d.Read(r, v)
-}*/
-
-// JSON Module of the codec used to perform the JSON manipulation with the help of codec
-// Encoding and Decoding of the JSON Data performed
-
-// JSONParser : parses the incoming struct and converts it to the JSON Bytes
-// Encoding of Struct to the JSON Bytes
-/**
-{
-	"name": "test"
-}
-*/
-func (d defaultCodec) JSONParser(v interface{}) ([]byte, error) {
-	// placeholder logic
-	// logic WIP
-	j, err := json.Serialize(v)
-	if err != nil {
-		return nil, err
+func Get(contentType string, v interface{}) Codec {
+	var readerWriter ReaderWriter
+	switch contentType {
+	case JSON:
+		{
+			readerWriter = JsonRW(v)
+		}
 	}
-	return j, nil
+
+	return BaseCodec{
+		readerWriter: readerWriter,
+	}
+
 }
 
-// EncodeToBytes : might not be needed as we would be moving the JSON operations to separate file
-// ----->>> JSONParser
-/*func (d defaultCodec) EncodeToBytes(v interface{}) ([]byte, error) {
+func (bc BaseCodec) DecodeString(s string, v interface{}) error {
+	r := strings.NewReader(s)
+	return bc.Read(r, v)
+}
+
+func (bc BaseCodec) DecodeBytes(b []byte, v interface{}) error {
+	r := bytes.NewReader(b)
+	return bc.Read(r, v)
+}
+
+// EncodeToBytes :
+func (bc BaseCodec) EncodeToBytes(v interface{}) ([]byte, error) {
 	buf := &bytes.Buffer{}
-	e := d.Write(v, buf)
+	e := bc.Write(v, buf)
 	if e == nil {
 		return buf.Bytes(), e
 	} else {
 		return nil, e
 	}
-}*/
+}
 
-func (d defaultCodec) EncodeToString(v interface{}) (string, error) {
+func (bc BaseCodec) EncodeToString(v interface{}) (string, error) {
 	buf := &bytes.Buffer{}
-	e := d.Write(v, buf)
+	e := bc.Write(v, buf)
 	if e == nil {
 		return buf.String(), e
 	} else {
@@ -264,15 +242,11 @@ func (d defaultCodec) EncodeToString(v interface{}) (string, error) {
 	}
 }
 
-func (d defaultCodec) Read(r io.Reader, v interface{}) error {
-	return errors.New("reader is not implemented in base codec")
+func (bc BaseCodec) Read(r io.Reader, v interface{}) error {
+	return bc.readerWriter.Read(r, v)
 }
 
-func (d defaultCodec) Write(v interface{}, w io.Writer) error {
+func (bc BaseCodec) Write(v interface{}, w io.Writer) error {
 
-	return errors.New("writer is not implemented in base codec")
-}
-
-func (d defaultCodec) Register(v interface{}) error {
-	return errors.New("register is not implemented in base codec")
+	return bc.readerWriter.Write(v, w)
 }
