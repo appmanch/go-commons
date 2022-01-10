@@ -1,7 +1,6 @@
 package codec
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -12,8 +11,8 @@ type Message struct {
 }
 
 func TestEncoder(t *testing.T) {
-	m := Message{"Test", "Hello", 123124124}
-	c := Get()
-	b, _ := c.JSONParser(m)
-	fmt.Println(b)
+	//m := Message{"Test", "Hello", 123124124}
+	//c := Get()
+	//b, _ := c.JSONParser(m)
+	//fmt.Println(b)
 }
