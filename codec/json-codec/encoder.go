@@ -19,13 +19,18 @@ func Validate(v interface{}) error {
 		f := typ.Field(i)
 
 		tag := f.Tag.Get("constraints")
-		name, opts := parseTag(tag)
+		constraints := parseTag(tag)
+		fieldValue := value.Field(i)
+		fmt.Println("fieldName", f.Name)
+		fmt.Println("fieldValue", value.Field(i))
+		fmt.Println("fieldType", f.Type.Kind())
+		fmt.Println("tagNames", constraints)
 
-		field := field{
-			name: f.Name,
-			typ:  f.Type,
-		}
-		fields = append(fields, field)
+		executeValidators(fieldValue, f.Type, constraints)
+
+		/*if err := executeValidators(fieldValue, f.Type, constraints); err != nil {
+			return err
+		}*/
 	}
 
 	nameIdx := make(map[string]int, len(fields))
@@ -36,27 +41,45 @@ func Validate(v interface{}) error {
 	return nil
 }
 
-type tagOptions string
-
-func parseTag(tag string) (string, tagOptions) {
-	if idx := strings.Index(tag, ","); idx != -1 {
-		return tag[:idx], tagOptions(tag[idx+1:])
+func parseTag(tag string) map[string]string {
+	m := make(map[string]string)
+	split := strings.Split(tag, ",")
+	for _, str := range split {
+		constraintName := strings.Split(str, ":")[0]
+		constraintValue := strings.Split(str, ":")[1]
+		m[constraintName] = constraintValue
 	}
-	return tag, ""
+	return m
 }
 
-func Serialize(v interface{}) ([]byte, error) {
-	s := &serializedState{}
-	err := s.serialize(v)
-	if err != nil {
-		return nil, err
+type validatorFunc func(value reflect.Value, constraint map[string]string) error
+
+func executeValidators(value reflect.Value, typ reflect.Type, constraint map[string]string) validatorFunc {
+	switch typ.Kind() {
+	case reflect.Bool:
+		return boolValidator
+	case reflect.String:
+		return stringValidator(value, constraint)
+	default:
+		return invalidValidator
 	}
-	buf := append([]byte(nil), s.Bytes()...)
-	return buf, nil
 }
 
-func (s *serializedState) serialize(v interface{}) (err error) {
-	s.reflectValue(reflect.ValueOf(v))
+func stringValidator(value reflect.Value, constraint map[string]string) error {
+
+	// constraints to be predefined and mapped to a particular validation
+	fmt.Println("executing validator", value)
+	for i, val := range constraint {
+		fmt.Println(i, val)
+	}
+	return nil
+}
+
+func boolValidator(value reflect.Value, constraint map[string]string) error {
+	return nil
+}
+
+func invalidValidator(value reflect.Value, constraint map[string]string) error {
 	return nil
 }
 

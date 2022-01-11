@@ -27,10 +27,10 @@ func (c *JsonCodec) Write(v interface{}, w io.Writer) error {
 
 	if err := json_codec.Validate(v); err != nil {
 		// if the input struct is not validated against the `constraints` then we fail the encoding part here
-		return nil
+		return err
 	}
 	// if the validation is successful then use the core json-codec marshal to generate the json-codec from the struct and write it back to the buffer
-	output, err := json.Marshal(v)
+	_, err := json.Marshal(v)
 	if err != nil {
 		// in case of error during marshaling
 		return nil
