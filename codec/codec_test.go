@@ -7,9 +7,9 @@ import (
 )
 
 type Message struct {
-	Name string `json:"name" contraints:"min-length:3"`
-	Body string `json:"body" contraints:"min-length:10"`
-	Time int64  `json:"time" contraints:"min-length:0"`
+	Name string `json-codec:"name" contraints:"min-length:3"`
+	Body string `json-codec:"body" contraints:"min-length:10"`
+	Time int64  `json-codec:"time" contraints:"min-length:0"`
 }
 
 func TestEncoder(t *testing.T) {

@@ -102,7 +102,7 @@ const (
 	// LogConfigEnvProperty specifies the environment variable that would specify the file location
 	LogConfigEnvProperty = "GC_LOG_CONFIG_FILE"
 	//DefaultlogFilePath specifies the location where the application should search for log config if the LogConfigEnvProperty is not specified
-	DefaultlogFilePath = "./log-config.json"
+	DefaultlogFilePath = "./log-config.json-codec"
 	//newLineBytes
 
 )
@@ -188,7 +188,7 @@ func loadConfig() *LogConfig {
 	fileName := config.GetEnvAsString(LogConfigEnvProperty, DefaultlogFilePath)
 	if fsutils.FileExists(fileName) {
 		contentType := fsutils.LookupContentType(fileName)
-		if contentType == "application/json" {
+		if contentType == "application/json-codec" {
 			logConfigFile, err := os.Open(fileName)
 			if err != nil {
 				writeLog(os.Stderr, "Unable to open the log config file using default log configuration", err)
@@ -203,7 +203,7 @@ func loadConfig() *LogConfig {
 				}
 			}
 		} else {
-			writeLog(os.Stderr, "Invalid file format supported format : application/json . Loading Default configuration")
+			writeLog(os.Stderr, "Invalid file format supported format : application/json-codec . Loading Default configuration")
 			logConfig = loadDefaultConfig()
 		}
 		//TODO Add yaml support once its available
@@ -249,7 +249,7 @@ func GetLogger() *Logger {
 }
 
 func writeLogMsg(writer io.Writer, logMsg *LogMessage) {
-	if logConfig.Format == "json" {
+	if logConfig.Format == "json-codec" {
 		//TODO update marshalling to direct field access to avoid reflection.
 		//This will be based on codec branch.
 		data, _ := json.Marshal(logMsg)

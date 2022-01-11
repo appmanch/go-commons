@@ -1,4 +1,4 @@
-package json
+package json_codec
 
 import (
 	"bytes"
