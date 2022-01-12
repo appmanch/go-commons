@@ -247,6 +247,5 @@ func (bc BaseCodec) Read(r io.Reader, v interface{}) error {
 }
 
 func (bc BaseCodec) Write(v interface{}, w io.Writer) error {
-
 	return bc.readerWriter.Write(v, w)
 }
