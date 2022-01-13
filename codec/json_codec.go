@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 )
 
 type JsonCodec struct {
@@ -40,6 +41,13 @@ func (c *JsonCodec) Write(v interface{}, w io.Writer) error {
 func (c *JsonCodec) Read(r io.Reader, v interface{}) error {
 	// unmarshal wrapper
 	// read the data from reader and map it to the interface
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return errors.New(fmt.Sprintf("input error: %d", err))
+	}
+	if errU := json.Unmarshal(b, v); err != nil {
+		return errors.New(fmt.Sprintf("unmarshal error: %d", errU))
+	}
 	return nil
 }
 
