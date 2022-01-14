@@ -15,8 +15,8 @@ func TestFileExists(t *testing.T) {
 		args args
 		want bool
 	}{
-		{name: "Existing File", args: struct{ path string }{path: wd + "/testdata/test.json-codec"}, want: true},
-		{name: "Non Existing File", args: struct{ path string }{path: wd + "/testdata/test-nonexisting.json-codec"}, want: false},
+		{name: "Existing File", args: struct{ path string }{path: wd + "/testdata/test.json"}, want: true},
+		{name: "Non Existing File", args: struct{ path string }{path: wd + "/testdata/test-nonexisting.json"}, want: false},
 		{name: "Dir As File", args: struct{ path string }{path: wd + "/testdata"}, want: false},
 	}
 	for _, tt := range tests {
@@ -40,7 +40,7 @@ func TestDirExists(t *testing.T) {
 	}{
 		{name: "Existing Dir", args: struct{ path string }{path: wd + "/testdata"}, want: true},
 		{name: "Non Existing Dir", args: struct{ path string }{path: wd + "/test"}, want: false},
-		{name: "File AS DIR", args: struct{ path string }{path: wd + "/testdata/test.json-codec"}, want: false},
+		{name: "File AS DIR", args: struct{ path string }{path: wd + "/testdata/test.json"}, want: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -62,7 +62,7 @@ func TestLookupContentType(t *testing.T) {
 		args args
 		want string
 	}{
-		{name: "JSON File", args: struct{ path string }{path: wd + "/testdata/test.json-codec"}, want: "application/json-codec"},
+		{name: "JSON File", args: struct{ path string }{path: wd + "/testdata/test.json"}, want: "application/json"},
 		{name: "YAML File", args: struct{ path string }{path: wd + "/testdata/test.yaml"}, want: "text/yaml"},
 		{name: "Dat File", args: struct{ path string }{path: wd + "/testdata/test.dat"}, want: "application/octet-stream"},
 	}

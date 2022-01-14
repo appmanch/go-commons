@@ -22,11 +22,11 @@ var logMsgPool = &sync.Pool{
 
 // LogMessage struct.
 type LogMessage struct {
-	Time    time.Time     `json-codec:"timestamp"`
-	FnName  string        `json-codec:"function,omitempty"`
-	Line    int           `json-codec:"line,omitempty"`
-	Content *bytes.Buffer `json-codec:"msg"`
-	Sev     Severity      `json-codec:"sev"`
+	Time    time.Time     `json:"timestamp"`
+	FnName  string        `json:"function,omitempty"`
+	Line    int           `json:"line,omitempty"`
+	Content *bytes.Buffer `json:"msg"`
+	Sev     Severity      `json:"sev"`
 	Buf     *bytes.Buffer
 	//SevBytes []byte
 }
