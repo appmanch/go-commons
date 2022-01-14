@@ -2,6 +2,7 @@ package codec
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 )
 
@@ -31,6 +32,24 @@ func TestNewJsonCodec(t *testing.T) {
 	}
 }
 
+func TestNewJsonCodec2(t *testing.T) {
+	var m Message
+	c := Get("application/json")
+	const input = `{"name":"Test","body":"Hello","time":123124124}`
+	b := strings.NewReader(input)
+	if err := c.Read(b, &m); err != nil {
+		t.Errorf("error in read: %d", err)
+	}
+	want := Message{
+		Name: "Test",
+		Body: "Hello",
+		Time: 123124124,
+	}
+	if m != want {
+		t.Errorf("got %q, want %q", m, want)
+	}
+}
+
 func TestNewXmlCodec(t *testing.T) {
 	m := XMLMessage{"Test", "Hello", 123124124}
 	c := Get("text/xml")
@@ -42,5 +61,23 @@ func TestNewXmlCodec(t *testing.T) {
 	const want = `<XMLMessage><name>Test</name><body>Hello</body><time>123124124</time></XMLMessage>`
 	if got := buf; got.String() != want {
 		t.Errorf("got %q, want %q", got.String(), want)
+	}
+}
+
+func TestNewXmlCodec2(t *testing.T) {
+	var m XMLMessage
+	c := Get("text/xml")
+	const input = `<XMLMessage><name>Test</name><body>Hello</body><time>123124124</time></XMLMessage>`
+	b := strings.NewReader(input)
+	if err := c.Read(b, &m); err != nil {
+		t.Errorf("error in read: %d", err)
+	}
+	want := XMLMessage{
+		Name: "Test",
+		Body: "Hello",
+		Time: 123124124,
+	}
+	if m != want {
+		t.Errorf("got %q, want %q", m, want)
 	}
 }
