@@ -196,12 +196,16 @@ type BaseCodec struct {
 	readerWriter ReaderWriter
 }
 
-func Get(contentType string, v interface{}) Codec {
+func Get(contentType string) Codec {
 	var readerWriter ReaderWriter
 	switch contentType {
 	case JSON:
 		{
-			readerWriter = JsonRW(v)
+			readerWriter = JsonRW()
+		}
+	case XML:
+		{
+			readerWriter = XmlRW()
 		}
 	}
 

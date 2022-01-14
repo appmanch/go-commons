@@ -13,11 +13,11 @@ type JsonCodec struct {
 
 }
 
-func NewJsonCodec(v interface{}) Codec {
-	return BaseCodec{readerWriter: JsonRW(v)}
+func NewJsonCodec() Codec {
+	return BaseCodec{readerWriter: JsonRW()}
 }
 
-func JsonRW(v interface{}) *JsonCodec {
+func JsonRW() *JsonCodec {
 	//Case the defn here and return the codec
 	// base codec's reader writer
 	return &JsonCodec{}
@@ -29,7 +29,7 @@ func (c *JsonCodec) Write(v interface{}, w io.Writer) error {
 	output, err := json.Marshal(v)
 	if err != nil {
 		// in case of error during marshaling
-		return errors.New(fmt.Sprintf("marshal error: %d", err))
+		return errors.New(fmt.Sprintf("json marshal error: %d", err))
 	}
 	_, errW := w.Write(output)
 	if errW != nil {
@@ -43,10 +43,10 @@ func (c *JsonCodec) Read(r io.Reader, v interface{}) error {
 	// read the data from reader and map it to the interface
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
-		return errors.New(fmt.Sprintf("input error: %d", err))
+		return errors.New(fmt.Sprintf("json input error: %d", err))
 	}
 	if errU := json.Unmarshal(b, v); err != nil {
-		return errors.New(fmt.Sprintf("unmarshal error: %d", errU))
+		return errors.New(fmt.Sprintf("json unmarshal error: %d", errU))
 	}
 	return nil
 }

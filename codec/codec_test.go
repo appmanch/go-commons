@@ -1,19 +1,46 @@
 package codec
 
 import (
-	"encoding/json"
-	"fmt"
+	"bytes"
 	"testing"
 )
 
 type Message struct {
-	Name string `json-codec:"name" constraints:"min-length:10"`
-	Body string `json-codec:"body" constraints:"min-length:10"`
-	Time int64  `json-codec:"time" constraints:"min-length:0"`
+	Name string `json:"name"`
+	Body string `json:"body"`
+	Time int64  `json:"time"`
 }
 
-func TestInBuiltJson(t *testing.T) {
+type XMLMessage struct {
+	Name string `xml:"name"`
+	Body string `xml:"body"`
+	Time int64  `xml:"time"`
+}
+
+func TestNewJsonCodec(t *testing.T) {
 	m := Message{"Test", "Hello", 123124124}
-	output, _ := json.Marshal(m)
-	fmt.Println("output\n", string(output))
+	c := Get("application/json")
+	buf := new(bytes.Buffer)
+	if err := c.Write(m, buf); err != nil {
+		t.Errorf("error in write: %d", err)
+	}
+
+	const want = `{"name":"Test","body":"Hello","time":123124124}`
+	if got := buf; got.String() != want {
+		t.Errorf("got %q, want %q", got.String(), want)
+	}
+}
+
+func TestNewXmlCodec(t *testing.T) {
+	m := XMLMessage{"Test", "Hello", 123124124}
+	c := Get("text/xml")
+	buf := new(bytes.Buffer)
+	if err := c.Write(m, buf); err != nil {
+		t.Errorf("error in write: %d", err)
+	}
+	// fmt.Println(buf)
+	const want = `<XMLMessage><name>Test</name><body>Hello</body><time>123124124</time></XMLMessage>`
+	if got := buf; got.String() != want {
+		t.Errorf("got %q, want %q", got.String(), want)
+	}
 }
