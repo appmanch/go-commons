@@ -35,7 +35,7 @@ type PackageConfig struct {
 	//PackageName
 	PackageName string `json:"pkgName" yaml:"pkgName"`
 	//Level to be set valid values : OFF,ERROR,WARN,INFO,DEBUG,TRACE
-	Level string `json-codec:"level" yaml:"level"`
+	Level string `json:"level" yaml:"level"`
 }
 
 //WriterConfig struct
