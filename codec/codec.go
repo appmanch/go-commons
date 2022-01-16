@@ -14,134 +14,6 @@ const (
 	YAML = "text/x-yaml"
 )
 
-// StructMeta Struct
-type StructMeta struct {
-	Fields map[string]string
-}
-
-// FieldMeta struct captures the basic information for a field
-type FieldMeta struct {
-	// Name of the field
-	Name string
-	// Dimension holds the field dimension
-	Dimension int
-	// Required flag indicating if the field is a required field.
-	Required bool
-	// TargetNames stores map for known format types. This allows
-	TargetNames map[string]string
-	// TargetConfig stores configuration that is required by the target format . for Eg. Attribute config for XML etc.
-	TargetConfig map[string]string
-	// Sequence specifies the order  of the fields in the source/target format
-	Sequence int
-	//SkipField indicates that if the value of the field is absent/nil then skip the field while writing to data
-	//This is similar to omitempty
-	SkipField bool
-}
-
-// StringFieldMeta Struct
-type StringFieldMeta struct {
-	FieldMeta
-	DefaultVal *string
-	Pattern    *string
-	Format     *string
-	MinLength  *int
-	MaxLength  *int
-}
-
-// Int8FieldMeta Struct
-type Int8FieldMeta struct {
-	FieldMeta
-	DefaultVal *int8
-	Min        *int8
-	Max        *int8
-}
-
-// Int16FieldMeta Struct
-type Int16FieldMeta struct {
-	FieldMeta
-	DefaultVal *int16
-	Min        *int16
-	Max        *int16
-}
-
-// Int32FieldMeta Struct
-type Int32FieldMeta struct {
-	FieldMeta
-	DefaultVal *int16
-	Min        *int32
-	Max        *int32
-}
-
-// IntFieldMeta Struct
-type IntFieldMeta struct {
-	FieldMeta
-	DefaultVal *int
-	Min        *int
-	Max        *int
-}
-
-// UInt8FieldMeta Struct
-type UInt8FieldMeta struct {
-	FieldMeta
-	DefaultVal *uint8
-	Min        *uint8
-	Max        *uint8
-}
-
-// UInt16FieldMeta Struct
-type UInt16FieldMeta struct {
-	FieldMeta
-	DefaultVal *uint16
-	Min        *uint16
-	Max        *uint16
-}
-
-// UInt32FieldMeta Struct
-type UInt32FieldMeta struct {
-	FieldMeta
-	DefaultVal *uint32
-	Min        *uint32
-	Max        *uint32
-}
-
-// UIntFieldMeta Struct
-type UIntFieldMeta struct {
-	FieldMeta
-	DefaultVal *uint
-	Min        *uint
-	Max        *uint
-}
-
-// UInt64FieldMeta Struct
-type UInt64FieldMeta struct {
-	FieldMeta
-	DefaultVal *uint64
-	Min        *uint64
-	Max        *uint64
-}
-
-// Float32FieldMeta Struct
-type Float32FieldMeta struct {
-	FieldMeta
-	DefaultVal *float32
-	Min        *float32
-	Max        *float32
-}
-
-// Float64FieldMeta Struct
-type Float64FieldMeta struct {
-	FieldMeta
-	DefaultVal *float64
-	Min        *float64
-	Max        *float64
-}
-
-// BooleanFieldMeta Struct
-type BooleanFieldMeta struct {
-	FieldMeta
-	DefaultVal *bool
-}
-
 // StringEncoder Interface
 type StringEncoder interface {
 	//EncodeToString will encode a type to string
@@ -183,6 +55,10 @@ type ReaderWriter interface {
 	Write(v interface{}, w io.Writer) error
 	//Read a type from a reader
 	Read(r io.Reader, v interface{}) error
+}
+
+type Validator interface {
+	Validate() (bool, []error)
 }
 
 // Codec Interface
