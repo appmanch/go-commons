@@ -2,212 +2,109 @@ package codec
 
 import (
 	"bytes"
-	"errors"
-	"go.appmanch.org/commons/textutils"
 	"io"
-	"reflect"
 	"strings"
+
+	"go.appmanch.org/commons/textutils"
 )
 
-//var knownTypes map[string][]FieldMeta=make(map[string][]FieldMeta)
-// Bool
-//	Int
-//	Int8
-//	Int16
-//	Int32
-//	Int64
-//	Uint
-//	Uint8
-//	Uint16
-//	Uint32
-//	Uint64
-//	Float32
-//	Float64
-//	Array
-//	Func
-//	Interface
-//	Map
-//	Slice
-//	String
-//	Struct
+const (
+	JSON = "application/json"
+	XML  = "text/xml"
+	YAML = "text/x-yaml"
+)
 
-type FieldMeta struct {
-	Name        string
-	FieldName   string
-	Type        reflect.Type
-	Dimension   int
-	Required    bool
-	TargetNames map[string]string
-}
-
-type StringFieldMeta struct {
-	FieldMeta
-	DefaultVal string
-	Pattern    string
-	Format     string
-	OmitEmpty  bool
-	Length     int
-}
-
-type Int8FieldMeta struct {
-	FieldMeta
-	DefaultVal int8
-	Min        int8
-	Max        int8
-}
-
-type Int16FieldMeta struct {
-	FieldMeta
-	DefaultVal int16
-	Min        int16
-	Max        int16
-}
-
-type Int32FieldMeta struct {
-	FieldMeta
-	DefaultVal int16
-	Min        int32
-	Max        int32
-}
-
-type IntFieldMeta struct {
-	FieldMeta
-	DefaultVal int
-	Min        int
-	Max        int
-}
-
-type UInt8FieldMeta struct {
-	FieldMeta
-	DefaultVal int8
-	Min        uint8
-	Max        uint8
-}
-
-type UInt16FieldMeta struct {
-	FieldMeta
-	DefaultVal int16
-	Min        uint16
-	Max        uint16
-}
-
-type UInt32FieldMeta struct {
-	FieldMeta
-	DefaultVal int16
-	Min        uint32
-	Max        uint32
-}
-
-type UIntFieldMeta struct {
-	FieldMeta
-	DefaultVal int
-	Min        uint
-	Max        uint
-}
-
-type UInt64FieldMeta struct {
-	FieldMeta
-	DefaultVal int64
-	Min        uint64
-	Max        uint64
-}
-
-type Float32FieldMeta struct {
-	FieldMeta
-	DefaultVal float32
-	Min        float32
-	Max        float32
-}
-
-type Float64FieldMeta struct {
-	FieldMeta
-	DefaultVal float64
-	Min        float64
-	Max        float64
-}
-
-type BooleanFieldMeta struct {
-	FieldMeta
-	DefaultVal bool
-}
-
-//StringEncoder interface
+// StringEncoder Interface
 type StringEncoder interface {
-	//EncodeToString will encode  a type to string
-	EncodeToString(v interface{}) string
+	//EncodeToString will encode a type to string
+	EncodeToString(v interface{}) (string, error)
 }
 
-//BytesEncoder interface
+// BytesEncoder Interface
 type BytesEncoder interface {
 	// EncodeToBytes will encode the provided type to []byte
-	EncodeToBytes(v interface{}) []byte
+	EncodeToBytes(v interface{}) ([]byte, error)
 }
 
-//StringDecoder interface
+// StringDecoder Interface
 type StringDecoder interface {
 	//DecodeString will decode  a type from string
 	DecodeString(s string, v interface{}) error
 }
 
-//BytesDecoder inferface
+// BytesDecoder Interface
 type BytesDecoder interface {
 	//DecodeBytes will decode a type from an array of bytes
 	DecodeBytes(b []byte, v interface{}) error
 }
 
-//Encoder
+// Encoder Interface
 type Encoder interface {
 	StringEncoder
 	BytesEncoder
 }
 
-//EncoderWriter Interface
-type EncoderWriter interface {
-	Encoder
-	//Write a type to writer
-	Write(v interface{}, w io.Writer) error
-}
-
-//Decoder Interface
+// Decoder Interface
 type Decoder interface {
 	StringDecoder
 	BytesDecoder
 }
 
-//DecoderReader interface
-type DecoderReader interface {
-	Decoder
+type ReaderWriter interface {
+	//Write a type to writer
+	Write(v interface{}, w io.Writer) error
 	//Read a type from a reader
 	Read(r io.Reader, v interface{}) error
 }
 
+type Validator interface {
+	Validate() (bool, []error)
+}
+
 // Codec Interface
 type Codec interface {
-	EncoderWriter
-	DecoderReader
+	Decoder
+	Encoder
+	ReaderWriter
 }
 
-type baseCodec struct {
+type BaseCodec struct {
+	readerWriter ReaderWriter
 }
 
-func Get() baseCodec {
-	return baseCodec{}
+func Get(contentType string) Codec {
+	var readerWriter ReaderWriter
+	switch contentType {
+	case JSON:
+		{
+			readerWriter = JsonRW()
+		}
+	case XML:
+		{
+			readerWriter = XmlRW()
+		}
+	}
+
+	return BaseCodec{
+		readerWriter: readerWriter,
+	}
+
 }
 
-func (d baseCodec) DecodeString(s string, v interface{}) error {
-
+func (bc BaseCodec) DecodeString(s string, v interface{}) error {
 	r := strings.NewReader(s)
-	return d.Read(r, v)
+	return bc.Read(r, v)
 }
 
-func (d baseCodec) DecodeBytes(b []byte, v interface{}) error {
+func (bc BaseCodec) DecodeBytes(b []byte, v interface{}) error {
 	r := bytes.NewReader(b)
-	return d.Read(r, v)
+	return bc.Read(r, v)
 }
 
-func (d baseCodec) EncodeToBytes(v interface{}) ([]byte, error) {
+// EncodeToBytes :
+func (bc BaseCodec) EncodeToBytes(v interface{}) ([]byte, error) {
 	buf := &bytes.Buffer{}
-	e := d.Write(v, buf)
+	e := bc.Write(v, buf)
 	if e == nil {
 		return buf.Bytes(), e
 	} else {
@@ -215,9 +112,9 @@ func (d baseCodec) EncodeToBytes(v interface{}) ([]byte, error) {
 	}
 }
 
-func (d baseCodec) EncodeToString(v interface{}) (string, error) {
+func (bc BaseCodec) EncodeToString(v interface{}) (string, error) {
 	buf := &bytes.Buffer{}
-	e := d.Write(v, buf)
+	e := bc.Write(v, buf)
 	if e == nil {
 		return buf.String(), e
 	} else {
@@ -225,11 +122,10 @@ func (d baseCodec) EncodeToString(v interface{}) (string, error) {
 	}
 }
 
-func (d baseCodec) Read(r io.Reader, v interface{}) error {
-
-	return errors.New("Reader is not implemented in base codec")
+func (bc BaseCodec) Read(r io.Reader, v interface{}) error {
+	return bc.readerWriter.Read(r, v)
 }
 
-func (d baseCodec) Write(v interface{}, w io.Writer) error {
-	return errors.New("Writer is not implemented in base codec")
+func (bc BaseCodec) Write(v interface{}, w io.Writer) error {
+	return bc.readerWriter.Write(v, w)
 }
